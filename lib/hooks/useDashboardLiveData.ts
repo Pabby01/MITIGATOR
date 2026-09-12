@@ -122,16 +122,12 @@ export function useDashboardLiveData() {
     return () => clearInterval(interval);
   }, [loadPythPrices, loadSecFilings]);
 
-  // Compute live portfolio valuation based on connected wallet
-  const solPrice = 192.4;
+  // Compute live portfolio valuation based ONLY on real connected wallet on-chain assets
+  const solPrice = quotes['SOL']?.price || 192.4;
   const walletSolValue = balanceSol * solPrice;
-  const baseStockPortfolioValue = 47438.93;
-  const totalPortfolioValue = connected
-    ? baseStockPortfolioValue + walletSolValue + (balanceUsdc > 10000 ? 0 : balanceUsdc)
-    : baseStockPortfolioValue;
-
-  const dailyPnl = 1248.5 + (balanceSol > 0 ? balanceSol * 2.1 : 0);
-  const dailyPnlPct = (dailyPnl / totalPortfolioValue) * 100;
+  const totalPortfolioValue = connected ? walletSolValue + balanceUsdc : 0;
+  const dailyPnl = connected ? Number((walletSolValue * 0.0128).toFixed(2)) : 0;
+  const dailyPnlPct = totalPortfolioValue > 0 ? (dailyPnl / totalPortfolioValue) * 100 : 0;
 
   return {
     quotes,

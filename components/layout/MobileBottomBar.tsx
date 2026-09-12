@@ -187,7 +187,7 @@ export function MobileBottomBar({ onOpenWallet }: { onOpenWallet?: () => void })
                         {connected ? shortAddress : 'Connect Solana Wallet'}
                       </p>
                       <p className="text-[10px] text-emerald-400 font-mono">
-                        {connected ? `${balanceSol.toFixed(2)} SOL Available` : 'Click to connect or use Demo Mode'}
+                        {connected ? `${balanceSol.toFixed(4)} SOL Available` : 'Click to connect Phantom, Solflare or Backpack'}
                       </p>
                     </div>
                   </div>

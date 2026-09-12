@@ -59,9 +59,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [walletModalOpen, setWalletModalOpen] = useState(false);
 
-  const { connected, shortAddress, walletType } = useSolanaWallet();
+  const { connected, shortAddress, walletType, isModalOpen, setIsModalOpen } = useSolanaWallet();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -71,7 +70,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       }
       if (e.key === 'Escape') {
         setSearchOpen(false);
-        setWalletModalOpen(false);
+        setIsModalOpen(false);
       }
     };
     window.addEventListener('keydown', handler);
@@ -151,7 +150,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Bottom: Wallet Pill */}
         <div className="border-t border-border p-2">
           <button
-            onClick={() => setWalletModalOpen(true)}
+            onClick={() => setIsModalOpen(true)}
             className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-card/50 transition-all text-left"
           >
             <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center flex-shrink-0">
@@ -162,8 +161,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <p className="text-xs font-medium truncate text-foreground">
                   {connected ? shortAddress : 'Connect Wallet'}
                 </p>
-                <p className="text-[10px] text-emerald-400 font-mono">
-                  {connected ? (walletType === 'demo' ? 'Demo Mode Active' : 'Solana Connected') : 'Disconnected'}
+                <p className={cn("text-[10px] font-mono", connected ? "text-emerald-400" : "text-muted-foreground")}>
+                  {connected ? `${walletType?.toUpperCase()} Connected` : 'Disconnected'}
                 </p>
               </div>
             )}
@@ -269,12 +268,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <ThemeToggle />
             {/* Wallet button */}
             <button
-              onClick={() => setWalletModalOpen(true)}
-              className="flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/25 px-3 py-1.5 text-sm hover:bg-primary/20 transition-all active:scale-95"
+              onClick={() => setIsModalOpen(true)}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm transition-all active:scale-95",
+                connected
+                  ? "bg-primary/10 border border-primary/25 text-primary hover:bg-primary/20"
+                  : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20"
+              )}
             >
-              <Wallet className="h-3.5 w-3.5 text-primary" />
-              <span className="font-medium text-primary tabular-nums">
-                {connected ? shortAddress : 'Connect'}
+              <Wallet className="h-3.5 w-3.5" />
+              <span className="font-semibold tabular-nums">
+                {connected ? shortAddress : 'Connect Wallet'}
               </span>
             </button>
           </div>
@@ -291,17 +295,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Native Mobile App Bottom Navigation Bar */}
-      <MobileBottomBar onOpenWallet={() => setWalletModalOpen(true)} />
+      <MobileBottomBar onOpenWallet={() => setIsModalOpen(true)} />
 
       {/* Command palette */}
       <AnimatePresence>
         {searchOpen && <CommandPalette onClose={() => setSearchOpen(false)} />}
       </AnimatePresence>
 
-      {/* Solana Wallet Modal with Live Injected & Demo Providers */}
+      {/* Solana Wallet Modal with Live Injected Providers ONLY */}
       <AnimatePresence>
-        {walletModalOpen && (
-          <WalletModal onClose={() => setWalletModalOpen(false)} />
+        {isModalOpen && (
+          <WalletModal onClose={() => setIsModalOpen(false)} />
         )}
       </AnimatePresence>
     </div>
@@ -352,8 +356,8 @@ function WalletModal({ onClose }: { onClose: () => void }) {
           <div className="flex items-center gap-2.5">
             <BrandLogo size={24} glow />
             <div>
-              <h3 className="text-base font-bold">Solana Wallet</h3>
-              <p className="text-xs text-muted-foreground">Select a provider or demo sandbox</p>
+              <h3 className="text-base font-bold">Connect Solana Wallet</h3>
+              <p className="text-xs text-muted-foreground">Select your browser extension</p>
             </div>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
@@ -375,7 +379,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
                 <span>Status</span>
                 <span className="text-emerald-400 font-semibold flex items-center gap-1">
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  {walletType === 'demo' ? 'Demo Sandbox Connected' : 'Solana Mainnet Connected'}
+                  Solana Mainnet-Beta Connected ({walletType?.toUpperCase()})
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
@@ -387,12 +391,8 @@ function WalletModal({ onClose }: { onClose: () => void }) {
                 <span className="font-mono text-[10px] text-muted-foreground truncate max-w-[200px]">{address}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">SOL Balance</span>
-                <span className="font-mono text-emerald-400 font-semibold">{balanceSol.toFixed(4)} SOL</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">USDC Reserve</span>
-                <span className="font-mono text-foreground font-semibold">${balanceUsdc.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span className="text-muted-foreground">Live SOL Balance</span>
+                <span className="font-mono text-emerald-400 font-bold">{balanceSol.toFixed(4)} SOL</span>
               </div>
             </div>
 
@@ -422,52 +422,41 @@ function WalletModal({ onClose }: { onClose: () => void }) {
                 name: 'Phantom',
                 icon: '🟣',
                 installed: isInstalled('phantom'),
-                subtext: isInstalled('phantom') ? 'Browser extension detected' : 'Click to install / connect',
+                subtext: isInstalled('phantom') ? 'Browser extension detected' : 'Click to install Phantom',
               },
               {
                 id: 'solflare' as const,
                 name: 'Solflare',
                 icon: '🟠',
                 installed: isInstalled('solflare'),
-                subtext: isInstalled('solflare') ? 'Browser extension detected' : 'Click to install / connect',
+                subtext: isInstalled('solflare') ? 'Browser extension detected' : 'Click to install Solflare',
               },
               {
                 id: 'backpack' as const,
                 name: 'Backpack',
                 icon: '🔴',
                 installed: isInstalled('backpack'),
-                subtext: isInstalled('backpack') ? 'Browser extension detected' : 'Click to install / connect',
-              },
-              {
-                id: 'demo' as const,
-                name: '1-Click Demo Sandbox',
-                icon: '⚡',
-                installed: true,
-                subtext: 'Pre-funded with 54.2 SOL & $10k USDC for instant testing',
+                subtext: isInstalled('backpack') ? 'Browser extension detected' : 'Click to install Backpack',
               },
             ].map((w) => (
               <button
                 key={w.id}
                 disabled={connecting}
                 onClick={() => handleSelectWallet(w.id)}
-                className={cn(
-                  'w-full flex items-center justify-between p-3.5 rounded-xl border border-border/70 hover:border-primary/50 hover:bg-card/70 transition-all group text-left',
-                  w.id === 'demo' && 'border-primary/30 bg-primary/5'
-                )}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl border border-border/70 hover:border-primary/50 hover:bg-card/70 transition-all group text-left"
               >
                 <div className="flex items-center gap-3">
                   <span className="text-xl">{w.icon}</span>
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold">{w.name}</p>
-                      {w.installed && w.id !== 'demo' && (
+                      {w.installed ? (
                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">
                           Detected
                         </span>
-                      )}
-                      {w.id === 'demo' && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-primary/20 text-primary font-medium">
-                          Instant
+                      ) : (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+                          Not Detected
                         </span>
                       )}
                     </div>
@@ -487,7 +476,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
         )}
 
         <p className="text-[11px] text-muted-foreground text-center">
-          Non-custodial & secure. Private keys are never requested or stored.
+          Non-custodial & secure. Real Solana Mainnet-Beta connection.
         </p>
       </motion.div>
     </div>

@@ -308,13 +308,13 @@ function ExecutionRouterContent() {
                 </div>
                 <h3 className="text-base font-semibold">
                   {connected
-                    ? `Sign Transaction with ${walletType === 'demo' ? 'Demo Sandbox' : walletType ? walletType.toUpperCase() : 'Wallet'}`
-                    : 'Awaiting Solana Wallet Connection'}
+                    ? `Sign Transaction with ${walletType?.toUpperCase() || 'Solana Wallet'}`
+                    : 'Connect Solana Wallet to Sign'}
                 </h3>
                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                   {connected
                     ? `Account ${shortAddress} · Non-custodial signature verification on Solana Mainnet.`
-                    : 'Please connect your Solana wallet or continue with 1-Click Demo execution.'}
+                    : 'A verified Solana wallet (Phantom, Solflare, Backpack) is required to broadcast orders.'}
                 </p>
                 <div className="p-3 rounded-lg bg-card/60 border border-border/80 text-xs font-mono text-left space-y-1.5">
                   <div className="flex justify-between text-muted-foreground">
@@ -323,7 +323,9 @@ function ExecutionRouterContent() {
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Signer:</span>
-                    <span className="text-emerald-400 font-semibold">{connected ? shortAddress : '7xKf...3pQw'}</span>
+                    <span className={cn("font-semibold", connected ? "text-emerald-400" : "text-amber-400")}>
+                      {connected ? shortAddress : 'Wallet Disconnected'}
+                    </span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Max Slippage Cap:</span>
@@ -342,10 +344,16 @@ function ExecutionRouterContent() {
                     Cancel
                   </button>
                   <button
+                    disabled={!connected}
                     onClick={() => setStage('confirmed')}
-                    className="flex-[2] rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white py-2 text-xs font-semibold transition-colors shadow-lg shadow-emerald-500/20 active:scale-95"
+                    className={cn(
+                      "flex-[2] rounded-lg py-2 text-xs font-semibold transition-colors shadow-lg active:scale-95",
+                      connected
+                        ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/20 cursor-pointer"
+                        : "bg-muted text-muted-foreground cursor-not-allowed"
+                    )}
                   >
-                    {connected ? `Approve & Broadcast (${walletType || 'Wallet'})` : 'Execute Demo Trade (Instant)'}
+                    {connected ? `Approve & Broadcast (${walletType?.toUpperCase() || 'Solana'})` : 'Connect Wallet to Sign'}
                   </button>
                 </div>
               </div>

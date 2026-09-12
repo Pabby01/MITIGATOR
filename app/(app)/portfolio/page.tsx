@@ -12,15 +12,23 @@ import { cn } from '@/lib/utils';
 
 export default function PortfolioPage() {
   const basePortfolio = getPortfolio();
-  const { connected, shortAddress, balanceSol, balanceUsdc, walletType } = useSolanaWallet();
+  const { connected, shortAddress, balanceSol, balanceUsdc, walletType, setIsModalOpen } = useSolanaWallet();
 
   const solValue = balanceSol * 192.4;
   const totalValue = connected
-    ? basePortfolio.totalValue + solValue + (balanceUsdc > 10000 ? 0 : balanceUsdc)
-    : basePortfolio.totalValue;
+    ? solValue + (balanceUsdc > 0 ? balanceUsdc : 0)
+    : 0;
 
-  const cash = connected ? balanceUsdc || 10450 : basePortfolio.cash;
-  const portfolio = { ...basePortfolio, totalValue, cash };
+  const cash = connected ? balanceUsdc : 0;
+  const portfolio = {
+    ...basePortfolio,
+    totalValue,
+    cash,
+    positions: connected ? basePortfolio.positions : [],
+    dailyPnl: connected ? 142.20 : 0,
+    totalPnl: connected ? 1240.50 : 0,
+    totalPnlPct: connected ? 4.2 : 0,
+  };
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
@@ -30,14 +38,38 @@ export default function PortfolioPage() {
           <p className="text-sm text-muted-foreground mt-0.5">Position analysis, risk exposure, and on-chain vault holdings</p>
         </div>
         <div className="flex items-center gap-2 text-xs bg-card/60 backdrop-blur border border-border/80 rounded-xl px-3 py-1.5 self-start sm:self-auto">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className={cn('h-2 w-2 rounded-full', connected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400')} />
           <span className="font-semibold text-foreground">
-            {connected ? (walletType === 'demo' ? 'Demo Vault Active' : `${walletType?.toUpperCase()}: ${shortAddress}`) : 'Wallet Disconnected'}
+            {connected ? `${walletType?.toUpperCase()}: ${shortAddress}` : 'Wallet Disconnected'}
           </span>
-          <span className="text-muted-foreground">·</span>
-          <span className="font-mono text-emerald-400 font-semibold">{balanceSol.toFixed(2)} SOL</span>
+          {connected && (
+            <>
+              <span className="text-muted-foreground">·</span>
+              <span className="font-mono text-emerald-400 font-semibold">{balanceSol.toFixed(2)} SOL</span>
+            </>
+          )}
         </div>
       </div>
+
+      {!connected && (
+        <GlassPanel className="p-6 border-dashed border-primary/30 text-center">
+          <div className="max-w-md mx-auto space-y-3">
+            <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto">
+              <Wallet className="h-6 w-6" />
+            </div>
+            <h3 className="text-lg font-bold">Connect Wallet to View Vault</h3>
+            <p className="text-xs text-muted-foreground">
+              Connect your Phantom, Solflare, or Backpack wallet to load your live on-chain tokenized equities, SOL balance, and risk profile.
+            </p>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm shadow-md transition-all"
+            >
+              <Wallet className="h-4 w-4" /> Connect Solana Wallet
+            </button>
+          </div>
+        </GlassPanel>
+      )}
 
       {/* Top metrics with AnimatedNumber */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">

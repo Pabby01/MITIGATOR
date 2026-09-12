@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { ShieldCheck, Wallet, Bell, Eye, Zap, Globe, Sun, Moon } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { cn } from '@/lib/utils';
 
 export default function SettingsPage() {
+  const { connected, address, shortAddress, balanceSol, disconnect, setIsModalOpen } = useSolanaWallet();
   const [reducedMotion, setReducedMotion] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -23,7 +25,7 @@ export default function SettingsPage() {
       <GlassPanel className="p-5">
         <div className="flex items-center gap-2 mb-4">
           <Wallet className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-semibold tracking-wide">Wallet</h2>
+          <h2 className="text-sm font-semibold tracking-wide">Wallet Connection</h2>
         </div>
         <div className="flex items-center justify-between rounded-lg border border-border p-3">
           <div className="flex items-center gap-3">
@@ -31,11 +33,38 @@ export default function SettingsPage() {
               <Wallet className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-medium">7xKf...3pQw</p>
-              <p className="text-xs text-emerald-400">Connected · Solana Mainnet</p>
+              {connected && address ? (
+                <>
+                  <p className="text-sm font-medium font-mono">{shortAddress}</p>
+                  <p className="text-xs text-emerald-400 font-mono">
+                    {balanceSol.toFixed(3)} SOL · Solana Mainnet-Beta
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-medium">No Wallet Connected</p>
+                  <p className="text-xs text-muted-foreground">
+                    Connect Phantom, Solflare, or Backpack for live trading
+                  </p>
+                </>
+              )}
             </div>
           </div>
-          <button className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">Disconnect</button>
+          {connected ? (
+            <button
+              onClick={() => disconnect()}
+              className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-red-400 hover:border-red-500/30 transition-colors"
+            >
+              Disconnect
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-3 py-1.5 text-xs transition-colors shadow-xs"
+            >
+              Connect Wallet
+            </button>
+          )}
         </div>
       </GlassPanel>
 

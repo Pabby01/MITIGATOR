@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
-export type WalletProviderType = 'phantom' | 'solflare' | 'backpack' | 'demo';
+export type WalletProviderType = 'phantom' | 'solflare' | 'backpack';
 
 export interface WalletState {
   connected: boolean;
@@ -12,13 +12,14 @@ export interface WalletState {
   walletType: WalletProviderType | null;
   balanceSol: number;
   balanceUsdc: number;
+  isModalOpen: boolean;
+  setIsModalOpen: (open: boolean) => void;
   isInstalled: (type: WalletProviderType) => boolean;
   connect: (type: WalletProviderType) => Promise<boolean>;
   disconnect: () => void;
   error: string | null;
+  refreshBalance: () => Promise<void>;
 }
-
-const DEMO_ADDRESS = '7xKf8m2P9qL1wNeR8VbYzXm4DcFgH6Jk3pQw';
 
 const SolanaWalletContext = createContext<WalletState>({
   connected: false,
@@ -28,10 +29,13 @@ const SolanaWalletContext = createContext<WalletState>({
   walletType: null,
   balanceSol: 0,
   balanceUsdc: 0,
+  isModalOpen: false,
+  setIsModalOpen: () => {},
   isInstalled: () => false,
   connect: async () => false,
   disconnect: () => {},
   error: null,
+  refreshBalance: async () => {},
 });
 
 export function formatShortAddress(addr: string | null): string {
@@ -60,7 +64,7 @@ export async function fetchLiveSolBalance(pubkey: string): Promise<number> {
     if (!res.ok) return 0;
     const data = await res.json();
     if (data?.result?.value !== undefined) {
-      return data.result.value / 1e9; // lamports to SOL
+      return data.result.value / 1e9; // convert lamports to SOL
     }
     return 0;
   } catch (err) {
@@ -70,18 +74,18 @@ export async function fetchLiveSolBalance(pubkey: string): Promise<number> {
 }
 
 export function SolanaWalletProvider({ children }: { children: React.ReactNode }) {
-  const [connected, setConnected] = useState<boolean>(true); // default to demo connected for seamless UX
+  const [connected, setConnected] = useState<boolean>(false);
   const [connecting, setConnecting] = useState<boolean>(false);
-  const [address, setAddress] = useState<string | null>(DEMO_ADDRESS);
-  const [walletType, setWalletType] = useState<WalletProviderType | null>('demo');
-  const [balanceSol, setBalanceSol] = useState<number>(54.2);
-  const [balanceUsdc, setBalanceUsdc] = useState<number>(10450.0);
+  const [address, setAddress] = useState<string | null>(null);
+  const [walletType, setWalletType] = useState<WalletProviderType | null>(null);
+  const [balanceSol, setBalanceSol] = useState<number>(0);
+  const [balanceUsdc, setBalanceUsdc] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  // Detect installed extensions safely
+  // Detect installed extensions safely in the browser
   const isInstalled = useCallback((type: WalletProviderType): boolean => {
     if (typeof window === 'undefined') return false;
-    if (type === 'demo') return true;
 
     const win = window as any;
     if (type === 'phantom') {
@@ -96,39 +100,28 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
     return false;
   }, []);
 
-  // Update balance when address changes
-  const updateBalance = useCallback(async (pubkey: string, type: WalletProviderType) => {
-    if (type === 'demo') {
-      setBalanceSol(54.2);
-      setBalanceUsdc(10450.0);
-      return;
-    }
-
+  // Update on-chain balance when address changes
+  const updateBalance = useCallback(async (pubkey: string) => {
     try {
       const sol = await fetchLiveSolBalance(pubkey);
       setBalanceSol(sol);
-      // For demo display purposes, compute an estimated USDC reserve if 0
-      setBalanceUsdc(sol > 0 ? Number((sol * 192.4).toFixed(2)) : 0);
+      // Query token accounts or default USDC
+      setBalanceUsdc(0);
     } catch {
-      // fallback
       setBalanceSol(0);
       setBalanceUsdc(0);
     }
   }, []);
 
+  const refreshBalance = useCallback(async () => {
+    if (address) {
+      await updateBalance(address);
+    }
+  }, [address, updateBalance]);
+
   const connect = useCallback(async (type: WalletProviderType): Promise<boolean> => {
     setConnecting(true);
     setError(null);
-
-    if (type === 'demo') {
-      setConnected(true);
-      setAddress(DEMO_ADDRESS);
-      setWalletType('demo');
-      setBalanceSol(54.2);
-      setBalanceUsdc(10450.0);
-      setConnecting(false);
-      return true;
-    }
 
     const win = window as any;
 
@@ -139,36 +132,37 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
         provider = win.phantom?.solana || win.solana;
         if (!provider || !provider.isPhantom) {
           window.open('https://phantom.app/', '_blank');
-          throw new Error('Phantom wallet is not installed. Redirecting to Phantom download...');
+          throw new Error('Phantom wallet not detected. Please install Phantom extension from https://phantom.app/');
         }
       } else if (type === 'solflare') {
         provider = win.solflare;
         if (!provider || !provider.isSolflare) {
           window.open('https://solflare.com/', '_blank');
-          throw new Error('Solflare wallet is not installed. Redirecting to Solflare download...');
+          throw new Error('Solflare wallet not detected. Please install Solflare extension from https://solflare.com/');
         }
       } else if (type === 'backpack') {
         provider = win.backpack;
         if (!provider) {
           window.open('https://backpack.app/', '_blank');
-          throw new Error('Backpack wallet is not installed. Redirecting to Backpack download...');
+          throw new Error('Backpack wallet not detected. Please install Backpack extension from https://backpack.app/');
         }
       }
 
+      // Request real wallet connection
       const response = await provider.connect();
       const pubkey = (response?.publicKey || provider.publicKey)?.toString();
 
       if (!pubkey) {
-        throw new Error('Could not retrieve public key from wallet');
+        throw new Error('Wallet connection rejected or public key not found');
       }
 
       setConnected(true);
       setAddress(pubkey);
       setWalletType(type);
-      await updateBalance(pubkey, type);
+      await updateBalance(pubkey);
       setConnecting(false);
 
-      // Listen to disconnect or account changes
+      // Event listeners for wallet session lifecycle
       provider.on?.('disconnect', () => {
         disconnect();
       });
@@ -176,7 +170,7 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
         if (newPubkey) {
           const pk = newPubkey.toString();
           setAddress(pk);
-          updateBalance(pk, type);
+          updateBalance(pk);
         } else {
           disconnect();
         }
@@ -184,7 +178,7 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
 
       return true;
     } catch (err: any) {
-      console.error('[SolanaWallet] Connection failed:', err);
+      console.error('[SolanaWallet] Connect error:', err);
       setError(err?.message || 'Failed to connect wallet');
       setConnecting(false);
       return false;
@@ -192,7 +186,7 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
   }, [updateBalance]);
 
   const disconnect = useCallback(() => {
-    if (typeof window !== 'undefined' && walletType && walletType !== 'demo') {
+    if (typeof window !== 'undefined' && walletType) {
       const win = window as any;
       try {
         if (walletType === 'phantom') (win.phantom?.solana || win.solana)?.disconnect?.();
@@ -210,6 +204,21 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
     setError(null);
   }, [walletType]);
 
+  // Eagerly check if the user previously authorized Phantom
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const win = window as any;
+    const phantom = win.phantom?.solana || win.solana;
+
+    if (phantom?.isPhantom && phantom.isConnected && phantom.publicKey) {
+      const pk = phantom.publicKey.toString();
+      setConnected(true);
+      setAddress(pk);
+      setWalletType('phantom');
+      updateBalance(pk);
+    }
+  }, [updateBalance]);
+
   const shortAddress = formatShortAddress(address);
 
   return (
@@ -222,10 +231,13 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
         walletType,
         balanceSol,
         balanceUsdc,
+        isModalOpen,
+        setIsModalOpen,
         isInstalled,
         connect,
         disconnect,
         error,
+        refreshBalance,
       }}
     >
       {children}

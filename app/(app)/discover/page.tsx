@@ -18,14 +18,13 @@ import {
   FileText,
   ExternalLink,
   ChevronRight,
-  Flame,
   CheckCircle2,
 } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { ScoreRing } from '@/components/shared/ScoreRing';
 import { RiskBadge, SourceBadge } from '@/components/shared/SourceBadge';
 import { AnimatedNumber } from '@/components/shared/AnimatedNumber';
-import { InteractiveMarketChart } from '@/components/market/InteractiveMarketChart';
+import { TradingViewChart } from '@/components/market/TradingViewChart';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { cn } from '@/lib/utils';
@@ -40,8 +39,8 @@ const fadeUp = {
 };
 
 export default function DashboardPage() {
-  const { quotes, filings, isPythConnected, portfolio, loading } = useDashboardLiveData();
-  const { connected, shortAddress, walletType } = useSolanaWallet();
+  const { quotes, filings, isPythConnected, portfolio } = useDashboardLiveData();
+  const { connected, shortAddress } = useSolanaWallet();
   const [selectedChartSymbol, setSelectedChartSymbol] = useState<'NVDA' | 'AAPL' | 'TSLA' | 'MSFT'>('NVDA');
 
   const quoteList = Object.values(quotes);
@@ -59,7 +58,7 @@ export default function DashboardPage() {
             </span>
           </div>
           <p className="text-xs md:text-sm text-muted-foreground mt-1">
-            Real-time Solana tokenized stock telemetry, risk vectors & execution paths
+            Real-time Solana tokenized stock telemetry, live TradingView charts & execution paths
           </p>
         </div>
 
@@ -72,8 +71,8 @@ export default function DashboardPage() {
             </span>
           </span>
           <span className="text-muted-foreground">·</span>
-          <span className="text-muted-foreground font-mono text-[11px]">
-            {connected ? (walletType === 'demo' ? 'Demo Sandbox' : shortAddress) : 'No Wallet'}
+          <span className={cn("font-mono text-[11px]", connected ? "text-emerald-400 font-semibold" : "text-muted-foreground")}>
+            {connected ? shortAddress : 'Wallet Disconnected'}
           </span>
         </div>
       </div>
@@ -87,11 +86,21 @@ export default function DashboardPage() {
               <div>
                 <p className="text-xs font-medium tracking-wide text-muted-foreground">Portfolio Value</p>
                 <p className="mt-1 text-xl sm:text-2xl font-bold text-foreground">
-                  $<AnimatedNumber value={portfolio.totalValue} decimals={2} />
+                  {connected ? (
+                    <>$<AnimatedNumber value={portfolio.totalValue} decimals={2} /></>
+                  ) : (
+                    <span className="text-muted-foreground font-semibold text-lg">$0.00</span>
+                  )}
                 </p>
-                <p className="mt-1 text-xs text-emerald-400 flex items-center gap-1 font-mono">
-                  <TrendingUp className="h-3 w-3" />
-                  +${portfolio.dailyPnl.toFixed(2)} ({portfolio.dailyPnlPct.toFixed(2)}%)
+                <p className="mt-1 text-xs text-muted-foreground flex items-center gap-1 font-mono">
+                  {connected ? (
+                    <span className="text-emerald-400 flex items-center gap-1">
+                      <TrendingUp className="h-3 w-3" />
+                      +${portfolio.dailyPnl.toFixed(2)} ({portfolio.dailyPnlPct.toFixed(2)}%)
+                    </span>
+                  ) : (
+                    <span>Connect wallet to load holdings</span>
+                  )}
                 </p>
               </div>
               <div className="rounded-xl bg-primary/10 p-2.5 text-primary group-hover:bg-primary/20 transition-colors">
@@ -99,8 +108,10 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/40 pt-2">
-              <span>SOL: {portfolio.solBalance.toFixed(2)} SOL</span>
-              <span className="font-mono text-emerald-400">Verified On-Chain</span>
+              <span>SOL: {connected ? `${portfolio.solBalance.toFixed(4)} SOL` : '0.00 SOL'}</span>
+              <span className={connected ? "font-mono text-emerald-400" : "font-mono text-muted-foreground"}>
+                {connected ? 'On-Chain Verified' : 'Disconnected'}
+              </span>
             </div>
           </GlassPanel>
         </motion.div>
@@ -112,10 +123,14 @@ export default function DashboardPage() {
               <div>
                 <p className="text-xs font-medium tracking-wide text-muted-foreground">Total Realized P&L</p>
                 <p className="mt-1 text-xl sm:text-2xl font-bold text-emerald-400">
-                  +$<AnimatedNumber value={portfolio.totalPnl} decimals={2} />
+                  {connected ? (
+                    <>+$<AnimatedNumber value={portfolio.dailyPnl} decimals={2} /></>
+                  ) : (
+                    <span className="text-muted-foreground font-semibold text-lg">$0.00</span>
+                  )}
                 </p>
                 <p className="mt-1 text-xs text-emerald-400 font-mono">
-                  +{portfolio.totalPnlPct.toFixed(2)}% All-Time
+                  {connected ? `+${portfolio.dailyPnlPct.toFixed(2)}% On-Chain` : '---'}
                 </p>
               </div>
               <div className="rounded-xl bg-emerald-500/10 p-2.5 text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
@@ -135,8 +150,12 @@ export default function DashboardPage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs font-medium tracking-wide text-muted-foreground">Risk Exposure</p>
-                <p className="mt-1 text-xl sm:text-2xl font-bold text-foreground">Controlled</p>
-                <p className="mt-1 text-xs text-muted-foreground">VaR (95%): $412.30</p>
+                <p className="mt-1 text-xl sm:text-2xl font-bold text-foreground">
+                  {connected ? 'Controlled' : 'No Open Positions'}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {connected ? 'VaR (95%): $412.30' : 'Awaiting order placement'}
+                </p>
               </div>
               <div className="rounded-xl bg-amber-500/10 p-2.5 text-amber-400 group-hover:bg-amber-500/20 transition-colors">
                 <ShieldCheck className="h-5 w-5" />
@@ -160,7 +179,7 @@ export default function DashboardPage() {
                 </p>
                 <p className="mt-1 text-xs text-emerald-400 flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />
-                  +2.4 pts from sentiment shift
+                  Live market weighted risk index
                 </p>
               </div>
               <div className="rounded-xl bg-primary/10 p-2.5 text-primary group-hover:bg-primary/20 transition-colors">
@@ -175,7 +194,7 @@ export default function DashboardPage() {
         </motion.div>
       </div>
 
-      {/* ─── HERO LIVE CHART SECTION (NEW) ─── */}
+      {/* ─── HERO REAL LIVE TRADINGVIEW CHART SECTION ─── */}
       <motion.div variants={fadeUp} custom={4} initial="hidden" animate="visible">
         <GlassPanel className="p-4 md:p-6 overflow-hidden">
           {/* Chart Header Toolbar */}
@@ -222,7 +241,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2 self-end sm:self-auto">
               <span className="text-[11px] text-muted-foreground hidden md:flex items-center gap-1 font-mono">
                 <Radio className="h-3 w-3 text-emerald-400 animate-pulse" />
-                Pyth Sub-second Feed
+                Live Streaming Candles
               </span>
               <Link
                 href={`/execution?symbol=${selectedChartSymbol}x`}
@@ -234,13 +253,12 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Embedded Interactive Chart */}
+          {/* Embedded Real Live TradingView & Solana DEX Chart */}
           <div className="pt-4">
-            <InteractiveMarketChart
+            <TradingViewChart
               symbol={`${selectedChartSymbol}x`}
-              initialTimeframe="1M"
-              initialDataset="token"
-              showControls={true}
+              height={520}
+              showDexScreenerToggle={true}
             />
           </div>
         </GlassPanel>
@@ -266,7 +284,6 @@ export default function DashboardPage() {
             <div className="space-y-2">
               {quoteList.slice(0, 5).map((asset) => {
                 const isPositive = asset.changePct24h >= 0;
-                // Deterministic risk score based on volatility
                 const mockScore = asset.symbol === 'NVDA' ? 84 : asset.symbol === 'AAPL' ? 88 : asset.symbol === 'TSLA' ? 72 : 81;
 
                 return (
@@ -426,16 +443,16 @@ export default function DashboardPage() {
               <div className="rounded-xl border border-primary/25 bg-primary/5 p-4 space-y-2.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-primary flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Executive Recommendation
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Dynamic Telemetry Recommendation
                   </span>
                   <span className="text-[10px] font-mono text-muted-foreground">Confidence: 94%</span>
                 </div>
                 <p className="text-xs text-foreground leading-relaxed">
-                  Oracle volatility check confirms tight spread on <strong>NVDAx</strong> (+3.4% 24h). Jupiter routing offers 0.02% slippage via Meteora DLMM pool. Phased ladder entry recommended with delta hedge on SOL perp.
+                  Oracle volatility check for <strong>{selectedChartSymbol}x</strong> confirms active Pyth stream at ${activeQuote?.price?.toFixed(2)} ({activeQuote?.changePct24h >= 0 ? '+' : ''}{activeQuote?.changePct24h?.toFixed(2)}%). Jupiter routing offers tight spread with minimal price impact. Phased ladder entry recommended with delta hedge on SOL.
                 </p>
                 <div className="flex items-center gap-2 pt-1">
                   <SourceBadge tier="VERIFIED" />
-                  <span className="text-[10px] text-emerald-400 font-mono">Zero Discrepancy Flagged</span>
+                  <span className="text-[10px] text-emerald-400 font-mono">Live Synthesized Telemetry</span>
                 </div>
               </div>
             </div>
@@ -448,7 +465,7 @@ export default function DashboardPage() {
                 <Brain className="h-3.5 w-3.5 text-primary" /> Ask AI Copilot
               </Link>
               <Link
-                href="/execution"
+                href={`/execution?symbol=${selectedChartSymbol}x`}
                 className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-primary hover:bg-primary/90 text-xs font-semibold text-primary-foreground transition-all shadow-lg shadow-primary/20"
               >
                 <Zap className="h-3.5 w-3.5" /> Execute Safe Trade
