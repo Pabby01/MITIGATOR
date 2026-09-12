@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { SolanaWalletProvider } from '@/lib/services/solana-wallet';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -48,7 +49,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
-          {children}
+          <SolanaWalletProvider>
+            {children}
+          </SolanaWalletProvider>
         </ThemeProvider>
       </body>
     </html>

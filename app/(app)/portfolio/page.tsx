@@ -2,29 +2,86 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Wallet, TrendingUp, TrendingDown, PieChart, Activity, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, PieChart, Activity, AlertTriangle, ArrowRight, ShieldCheck } from 'lucide-react';
 import { GlassPanel, MetricCard } from '@/components/shared/GlassPanel';
 import { RiskBadge } from '@/components/shared/SourceBadge';
+import { AnimatedNumber } from '@/components/shared/AnimatedNumber';
+import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { getPortfolio } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 
 export default function PortfolioPage() {
-  const portfolio = getPortfolio();
+  const basePortfolio = getPortfolio();
+  const { connected, shortAddress, balanceSol, balanceUsdc, walletType } = useSolanaWallet();
+
+  const solValue = balanceSol * 192.4;
+  const totalValue = connected
+    ? basePortfolio.totalValue + solValue + (balanceUsdc > 10000 ? 0 : balanceUsdc)
+    : basePortfolio.totalValue;
+
+  const cash = connected ? balanceUsdc || 10450 : basePortfolio.cash;
+  const portfolio = { ...basePortfolio, totalValue, cash };
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Portfolio</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Position analysis, risk exposure, and portfolio intelligence</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Portfolio & Vault</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Position analysis, risk exposure, and on-chain vault holdings</p>
+        </div>
+        <div className="flex items-center gap-2 text-xs bg-card/60 backdrop-blur border border-border/80 rounded-xl px-3 py-1.5 self-start sm:self-auto">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="font-semibold text-foreground">
+            {connected ? (walletType === 'demo' ? 'Demo Vault Active' : `${walletType?.toUpperCase()}: ${shortAddress}`) : 'Wallet Disconnected'}
+          </span>
+          <span className="text-muted-foreground">·</span>
+          <span className="font-mono text-emerald-400 font-semibold">{balanceSol.toFixed(2)} SOL</span>
+        </div>
       </div>
 
-      {/* Top metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <MetricCard label="Total Value" value={`$${portfolio.totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} icon={Wallet} />
-        <MetricCard label="Cash" value={`$${portfolio.cash.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} icon={Wallet} />
-        <MetricCard label="Total P&L" value={`+$${portfolio.totalPnl.toFixed(2)}`} change={`+${portfolio.totalPnlPct.toFixed(2)}%`} changePct={portfolio.totalPnlPct} icon={TrendingUp} />
-        <MetricCard label="Daily P&L" value={`+$${portfolio.dailyPnl.toFixed(2)}`} change={`+${portfolio.dailyPnlPct.toFixed(2)}%`} changePct={portfolio.dailyPnlPct} icon={TrendingUp} />
-        <MetricCard label="Cost Basis" value={`$${portfolio.costBasis.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} icon={PieChart} />
+      {/* Top metrics with AnimatedNumber */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
+        <GlassPanel hover className="p-4">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground">Total Value</p>
+          <p className="mt-1 text-xl font-bold text-foreground">
+            $<AnimatedNumber value={totalValue} decimals={2} />
+          </p>
+          <p className="mt-1 text-xs text-emerald-400 font-mono">
+            +${basePortfolio.dailyPnl.toFixed(2)} (Today)
+          </p>
+        </GlassPanel>
+
+        <GlassPanel hover className="p-4">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground">USDC Reserve</p>
+          <p className="mt-1 text-xl font-bold text-foreground">
+            $<AnimatedNumber value={cash} decimals={2} />
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground font-mono">Settlement Cash</p>
+        </GlassPanel>
+
+        <GlassPanel hover className="p-4">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground">Total P&L</p>
+          <p className="mt-1 text-xl font-bold text-emerald-400">
+            +$<AnimatedNumber value={basePortfolio.totalPnl} decimals={2} />
+          </p>
+          <p className="mt-1 text-xs text-emerald-400 font-mono">+{basePortfolio.totalPnlPct.toFixed(2)}%</p>
+        </GlassPanel>
+
+        <GlassPanel hover className="p-4">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground">Solana Holdings</p>
+          <p className="mt-1 text-xl font-bold text-foreground font-mono">
+            <AnimatedNumber value={balanceSol} decimals={2} /> SOL
+          </p>
+          <p className="mt-1 text-xs text-emerald-400 font-mono">${solValue.toFixed(2)} USD</p>
+        </GlassPanel>
+
+        <GlassPanel hover className="p-4">
+          <p className="text-xs font-medium tracking-wide text-muted-foreground">Cost Basis</p>
+          <p className="mt-1 text-xl font-bold text-foreground">
+            $<AnimatedNumber value={basePortfolio.costBasis} decimals={2} />
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground font-mono">Realized Cap</p>
+        </GlassPanel>
       </div>
 
       {/* Risk metrics */}

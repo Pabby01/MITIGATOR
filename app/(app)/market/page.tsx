@@ -16,6 +16,7 @@ import {
 import { GlassPanel, PriceChange } from '@/components/shared/GlassPanel';
 import { RiskBadge } from '@/components/shared/SourceBadge';
 import { getAllAssets } from '@/lib/mock-data';
+import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
 import { cn } from '@/lib/utils';
 
 const MarketUniverse = dynamic(
@@ -35,13 +36,34 @@ type ViewMode = 'cards' | 'table' | '3d';
 
 export default function MarketDiscoveryPage() {
   const assets = getAllAssets();
+  const { quotes, isPythConnected } = useDashboardLiveData();
   const [view, setView] = useState<ViewMode>('cards');
   const [search, setSearch] = useState('');
   const [sectorFilter, setSectorFilter] = useState('all');
 
-  const sectors = ['all', ...Array.from(new Set(assets.map((a) => a.tokenizedAsset.underlying.sector)))];
-  const filtered = assets.filter((a) => {
-    const matchSearch = a.tokenizedAsset.symbol.toLowerCase().includes(search.toLowerCase()) || a.tokenizedAsset.name.toLowerCase().includes(search.toLowerCase());
+  // Merge live Pyth prices into assets
+  const liveAssets = assets.map((a) => {
+    const rawSym = a.tokenizedAsset.symbol.replace(/x$/, '');
+    const liveQ = quotes[rawSym];
+    if (liveQ && liveQ.price > 0) {
+      return {
+        ...a,
+        quote: {
+          ...a.quote,
+          price: liveQ.price,
+          change24h: liveQ.change24h,
+          changePct24h: liveQ.changePct24h,
+        },
+      };
+    }
+    return a;
+  });
+
+  const sectors = ['all', ...Array.from(new Set(liveAssets.map((a) => a.tokenizedAsset.underlying.sector)))];
+  const filtered = liveAssets.filter((a) => {
+    const matchSearch =
+      a.tokenizedAsset.symbol.toLowerCase().includes(search.toLowerCase()) ||
+      a.tokenizedAsset.name.toLowerCase().includes(search.toLowerCase());
     const matchSector = sectorFilter === 'all' || a.tokenizedAsset.underlying.sector === sectorFilter;
     return matchSearch && matchSector;
   });
@@ -49,9 +71,17 @@ export default function MarketDiscoveryPage() {
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Markets</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Discover and analyze tokenized stocks on Solana</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Markets</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Discover and analyze tokenized stocks on Solana</p>
+        </div>
+        <div className="flex items-center gap-2 text-xs bg-card/60 backdrop-blur border border-border/80 rounded-xl px-3 py-1.5 self-start sm:self-auto">
+          <span className={cn('h-2 w-2 rounded-full', isPythConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400')} />
+          <span className="font-semibold text-foreground">
+            {isPythConnected ? 'Pyth Hermes: Connected' : 'Oracle Syncing'}
+          </span>
+        </div>
       </div>
 
       {/* Controls */}

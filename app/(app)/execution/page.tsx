@@ -1,21 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Zap, Wallet, CheckCircle2, ArrowRight, Clock, ExternalLink, RefreshCw, Copy, Check, ShieldCheck } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { getAllAssets, getExecutionQuotes } from '@/lib/mock-data';
+import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { cn } from '@/lib/utils';
 
 export default function ExecutionPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-center text-xs text-muted-foreground">Loading Execution Router...</div>}>
+      <ExecutionRouterContent />
+    </Suspense>
+  );
+}
+
+function ExecutionRouterContent() {
+  const searchParams = useSearchParams();
+  const initialSymbol = searchParams.get('symbol') || 'NVDAx';
   const assets = getAllAssets();
-  const [symbol, setSymbol] = useState('NVDAx');
+  const [symbol, setSymbol] = useState(initialSymbol);
   const [amount, setAmount] = useState(2000);
   const [stage, setStage] = useState<'compare' | 'review' | 'sign' | 'confirmed'>('compare');
   const [selectedQuoteVenue, setSelectedQuoteVenue] = useState<string | null>(null);
   const [quoteSecondsLeft, setQuoteSecondsLeft] = useState(8);
   const [copiedSignature, setCopiedSignature] = useState(false);
   const [txSignature] = useState('5xKf8m2P9nLq4R1vTz6W8yXu9kH3jF7oPdAm2sVw1');
+
+  const { connected, shortAddress, walletType } = useSolanaWallet();
 
   const quotes = getExecutionQuotes(symbol, amount);
   const bestQuote = quotes.reduce((best, q) => (q.slippage < best.slippage ? q : best), quotes[0]);
@@ -292,14 +306,33 @@ export default function ExecutionPage() {
                 <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center animate-pulse-ring">
                   <Wallet className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-base font-semibold">Awaiting Solana Wallet Signature</h3>
+                <h3 className="text-base font-semibold">
+                  {connected
+                    ? `Sign Transaction with ${walletType === 'demo' ? 'Demo Sandbox' : walletType ? walletType.toUpperCase() : 'Wallet'}`
+                    : 'Awaiting Solana Wallet Connection'}
+                </h3>
                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  Approve transaction payload in Phantom, Solflare, or Backpack. MITIGATOR will never request your private key or seed phrase.
+                  {connected
+                    ? `Account ${shortAddress} · Non-custodial signature verification on Solana Mainnet.`
+                    : 'Please connect your Solana wallet or continue with 1-Click Demo execution.'}
                 </p>
-                <div className="p-3 rounded-lg bg-card/60 border border-border/80 text-xs font-mono text-left space-y-1">
-                  <div className="text-muted-foreground">Program: <span className="text-foreground">Token-2022 Swap Instruction</span></div>
-                  <div className="text-muted-foreground">Max Slippage: <span className="text-emerald-400 font-bold">{activeQuote.slippage.toFixed(3)}%</span></div>
-                  <div className="text-muted-foreground">Network Fee: <span className="text-foreground">0.000005 SOL (~$0.0007)</span></div>
+                <div className="p-3 rounded-lg bg-card/60 border border-border/80 text-xs font-mono text-left space-y-1.5">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Program:</span>
+                    <span className="text-foreground">Token-2022 Swap Instruction</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Signer:</span>
+                    <span className="text-emerald-400 font-semibold">{connected ? shortAddress : '7xKf...3pQw'}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Max Slippage Cap:</span>
+                    <span className="text-emerald-400 font-bold">{activeQuote.slippage.toFixed(3)}%</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Estimated Network Fee:</span>
+                    <span className="text-foreground">0.000005 SOL (~$0.0009)</span>
+                  </div>
                 </div>
                 <div className="flex gap-2 pt-2">
                   <button
@@ -310,9 +343,9 @@ export default function ExecutionPage() {
                   </button>
                   <button
                     onClick={() => setStage('confirmed')}
-                    className="flex-[2] rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white py-2 text-xs font-semibold transition-colors shadow-lg shadow-emerald-500/20"
+                    className="flex-[2] rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white py-2 text-xs font-semibold transition-colors shadow-lg shadow-emerald-500/20 active:scale-95"
                   >
-                    Simulate Wallet Approval (Demo)
+                    {connected ? `Approve & Broadcast (${walletType || 'Wallet'})` : 'Execute Demo Trade (Instant)'}
                   </button>
                 </div>
               </div>
