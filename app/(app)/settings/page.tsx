@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { ShieldCheck, Wallet, Bell, Eye, Zap, Globe, Sun, Moon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ShieldCheck, Wallet, Bell, Eye, Zap, Globe, Sun, Moon, User } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
+import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/services/user-profile';
+import { isSupabaseConfigured } from '@/lib/services/supabase';
 import { cn } from '@/lib/utils';
 
 export default function SettingsPage() {
@@ -13,6 +15,47 @@ export default function SettingsPage() {
   const [notifications, setNotifications] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [webglFallback, setWebglFallback] = useState(false);
+
+  // Profile states
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [displayName, setDisplayName] = useState('Solana Trader');
+  const [riskTolerance, setRiskTolerance] = useState<'conservative' | 'balanced' | 'aggressive'>('balanced');
+  const [maxOrderSize, setMaxOrderSize] = useState(5000);
+  const [maxSlippage, setMaxSlippage] = useState(0.5);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const isSupabaseActive = isSupabaseConfigured();
+
+  useEffect(() => {
+    getUserProfile(address || 'guest').then((p) => {
+      setProfile(p);
+      setDisplayName(p.displayName);
+      setRiskTolerance(p.riskTolerance);
+      setMaxOrderSize(p.maxOrderSizeUsd);
+      setMaxSlippage(p.maxSlippagePct);
+    });
+  }, [address]);
+
+  const handleSaveProfile = async () => {
+    const updated: UserProfile = {
+      walletAddress: address || 'guest',
+      displayName,
+      riskTolerance,
+      maxOrderSizeUsd: maxOrderSize,
+      maxSlippagePct: maxSlippage,
+      watchlist: profile?.watchlist || ['NVDAx', 'TSLAx', 'AAPLx'],
+      notifications: profile?.notifications || {
+        pegDeviation: true,
+        secFilings: true,
+        riskDeterioration: true,
+      },
+      createdAt: profile?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    await saveUserProfile(updated);
+    setProfile(updated);
+    setSaveStatus('Saved & Synced');
+    setTimeout(() => setSaveStatus(null), 3000);
+  };
 
   return (
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-6">
@@ -65,6 +108,86 @@ export default function SettingsPage() {
               Connect Wallet
             </button>
           )}
+        </div>
+      </GlassPanel>
+
+      {/* User Profile & Persona */}
+      <GlassPanel className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-emerald-400" />
+            <h2 className="text-sm font-semibold tracking-wide">Trader Profile & Risk Persona</h2>
+          </div>
+          <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            {isSupabaseActive ? 'Supabase Sync Active' : 'Client Storage (Encrypted Local)'}
+          </span>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">Trader Alias / Name</label>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="e.g. Satoshi.sol"
+              className="w-full rounded-lg bg-background/60 border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Risk Persona</label>
+              <select
+                value={riskTolerance}
+                onChange={(e) => setRiskTolerance(e.target.value as any)}
+                className="w-full rounded-lg bg-background/60 border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+              >
+                <option value="conservative">Conservative (Preservation)</option>
+                <option value="balanced">Balanced (Alpha & Guardrails)</option>
+                <option value="aggressive">Aggressive (Degen Sizing)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Max Order Size Cap</label>
+              <div className="relative">
+                <span className="absolute left-3 top-2 text-sm text-muted-foreground">$</span>
+                <input
+                  type="number"
+                  value={maxOrderSize}
+                  onChange={(e) => setMaxOrderSize(Number(e.target.value))}
+                  className="w-full rounded-lg bg-background/60 border border-border pl-7 pr-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Max Slippage Cap</label>
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.05"
+                  value={maxSlippage}
+                  onChange={(e) => setMaxSlippage(Number(e.target.value))}
+                  className="w-full rounded-lg bg-background/60 border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary"
+                />
+                <span className="absolute right-3 top-2 text-sm text-muted-foreground">%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              {saveStatus ? <span className="text-emerald-400 font-medium">{saveStatus}</span> : 'Profile preferences govern pre-trade execution guardrails.'}
+            </span>
+            <button
+              onClick={handleSaveProfile}
+              className="rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-4 py-2 text-xs transition-colors shadow-xs"
+            >
+              Save Profile
+            </button>
+          </div>
         </div>
       </GlassPanel>
 

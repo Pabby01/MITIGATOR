@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getLivePythPrice } from '@/lib/services/pyth-service';
 import { getLiveSECFilings } from '@/lib/services/sec-edgar-service';
 import { getLiveJupiterQuote } from '@/lib/services/jupiter-service';
+import { computeMitigatorRiskScore } from '@/lib/services/risk-engine';
 
 export async function POST(req: NextRequest) {
   try {
@@ -70,19 +71,20 @@ Respond in JSON format with: verdict (string), summary (string), riskScore (numb
       }
     }
 
-    // 2. Deterministic, real-time risk synthesis engine based on live on-chain & SEC data
-    const isVolatile = symbol === 'TSLAx' || symbol === 'COINx';
-    const computedScore = isVolatile ? 74 : 86;
-    const computedConfidence = pythPrice.isStale ? 78 : 93;
+    // 2. Deterministic, real-time multi-factor risk engine adhering to PRD Section 8
+    const riskProfile = computeMitigatorRiskScore({
+      symbol,
+      price: pythPrice.price,
+      oracleLatencyMs: pythPrice.stalenessMs,
+      isOracleStale: pythPrice.isStale,
+      oracleConfidenceRange: pythPrice.conf,
+      secFilingsCount: secFilings.length,
+      latestSecFilingForm: secFilings[0]?.form || '10-K',
+      jupiterSlippagePct: jupQuote?.priceImpactPct !== undefined ? Math.abs(jupQuote.priceImpactPct) : 0.04,
+      orderAmountUsd: amount,
+    });
+
     const recentFiling = secFilings[0]?.form || '10-K';
-
-    const verdict =
-      computedScore >= 80
-        ? 'PHASED ENTRY RECOMMENDED'
-        : computedScore >= 70
-        ? 'MODERATE RISK · DCA ADVISORY'
-        : 'ELEVATED SPREAD · CAUTION';
-
     const summary = `Real-time synthesis for ${symbol} order of $${amount.toLocaleString()} USD: Pyth Hermes streaming price is $${pythPrice.price.toFixed(
       2
     )} with confidence interval ±$${pythPrice.conf}. Underlying equity corporate filings on SEC EDGAR confirm verified capital structure (latest ${recentFiling}). Solana Token-2022 peg deviation is currently < 0.04% par. Execution via Jupiter indicates minimal market impact.`;
@@ -97,11 +99,13 @@ Respond in JSON format with: verdict (string), summary (string), riskScore (numb
         : `Safe immediate execution of $${amount.toLocaleString()} ${symbol} via Meteora DLMM / Jupiter routing with a 0.15% slippage tolerance cap.`;
 
     return NextResponse.json({
-      verdict,
+      verdict: riskProfile.summaryVerdict,
       summary,
-      riskScore: computedScore,
-      confidence: computedConfidence,
+      riskScore: riskProfile.overallScore,
+      confidence: Math.round(riskProfile.confidence * 100),
       recommendation,
+      factors: riskProfile.factors,
+      modelVersion: riskProfile.modelVersion,
       sources: [
         {
           name: 'Pyth Hermes Oracle',
