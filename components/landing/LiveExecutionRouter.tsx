@@ -41,7 +41,7 @@ export function LiveExecutionRouter() {
     const interval = setInterval(() => {
       setVenues((prev) => {
         // Pick 1 to 3 random venues to update price & slippage
-        const updated = prev.map((v) => {
+        const updated: VenueQuote[] = prev.map((v): VenueQuote => {
           const shouldUpdate = Math.random() > 0.4;
           if (!shouldUpdate) return { ...v, priceChange: null };
 
@@ -52,7 +52,8 @@ export function LiveExecutionRouter() {
           const spreadDelta = (Math.random() - 0.5) * 0.02;
           const newSpread = Math.max(0.02, +(v.spread + spreadDelta).toFixed(2));
 
-          const priceChange = newPrice > v.price ? 'up' : newPrice < v.price ? 'down' : null;
+          const priceChange: 'up' | 'down' | null =
+            newPrice > v.price ? 'up' : newPrice < v.price ? 'down' : null;
 
           return {
             ...v,
