@@ -38,6 +38,16 @@ const MarketUniverse = dynamic(
   { ssr: false, loading: () => <div className="w-full h-full bg-background/50" /> }
 );
 
+const SimulatedTradeWindow = dynamic(
+  () => import('@/components/landing/SimulatedTradeWindow').then((m) => m.SimulatedTradeWindow),
+  { ssr: false }
+);
+
+const GsapScrollEffects = dynamic(
+  () => import('@/components/landing/GsapScrollEffects').then((m) => m.GsapScrollEffects),
+  { ssr: false }
+);
+
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   visible: (i: number) => ({
@@ -93,6 +103,9 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary">
+      {/* GSAP Scroll Trigger Controller */}
+      <GsapScrollEffects />
+
       {/* ─── TOP NAVIGATION ─── */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 backdrop-blur-xl bg-background/70 border-b border-border/40">
         <Link href="/" className="flex items-center gap-3">
@@ -142,7 +155,10 @@ export default function LandingPage() {
 
         {/* Hero Content Container */}
         <div className="relative z-10 max-w-7xl mx-auto px-6 w-full">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl relative p-6 sm:p-8 md:p-10 rounded-3xl hero-text-scrim">
+            {/* Subtle inner accent glow */}
+            <div className="absolute -top-8 -left-8 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none -z-10" />
+
             {/* Hackathon Badge */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
@@ -159,7 +175,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-6 text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter leading-[0.95] text-foreground"
+              className="mt-6 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter leading-[0.95] text-foreground"
             >
               KNOW THE RISK.
               <br />
@@ -170,7 +186,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="mt-6 text-lg md:text-xl text-muted-foreground leading-relaxed max-w-xl"
+              className="mt-6 text-base sm:text-lg md:text-xl text-muted-foreground leading-relaxed max-w-xl"
             >
               AI-powered pre-trade intelligence, multi-factor risk analysis, automated mitigation guardrails, and execution routing for tokenized equities on Solana.
             </motion.p>
@@ -426,6 +442,77 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ─── SECTION 2.5: ARCHITECTURE & TELEMETRY SHOWCASE (GENERATED IMAGES) ─── */}
+      <section data-gsap="fade-up" className="relative py-28 px-6 border-b border-border/30 overflow-hidden bg-card/10">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-mono text-primary mb-3">
+              <Sparkles className="h-3 w-3" /> INSTITUTIONAL ARCHITECTURE
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
+              Designed for Solana. <span className="text-gradient-primary">Engineered for Capital.</span>
+            </h2>
+            <p className="mt-4 text-base text-muted-foreground leading-relaxed">
+              Explore MITIGATOR's dual-engine interface: real-time institutional multi-factor risk radar and 1:1 cryptographic collateral vaults.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+            {/* Image Card 1 */}
+            <div data-gsap="parallax" className="hairline-card rounded-3xl overflow-hidden p-3.5 border border-white/10 flex flex-col justify-between group">
+              <div className="relative rounded-2xl overflow-hidden aspect-[16/9] w-full bg-card/60">
+                <img
+                  src="/images/terminal-preview.jpg"
+                  alt="MITIGATOR 3D Institutional Risk Radar Terminal"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60" />
+                <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-emerald-500/30 text-xs font-mono text-emerald-400">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Live Risk Radar Terminal
+                </div>
+              </div>
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-bold text-foreground">Multi-Factor Risk Radar &amp; Telemetry</h3>
+                  <span className="text-xs font-mono text-primary font-bold">8 Dimensions</span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Continuous multi-source telemetry monitoring Pyth Hermes oracle freshness, AMM liquidity depth across Raydium &amp; Orca, and off-market hours divergence.
+                </p>
+              </div>
+            </div>
+
+            {/* Image Card 2 */}
+            <div data-gsap="parallax" className="hairline-card rounded-3xl overflow-hidden p-3.5 border border-white/10 flex flex-col justify-between group">
+              <div className="relative rounded-2xl overflow-hidden aspect-[16/9] w-full bg-card/60">
+                <img
+                  src="/images/vault-preview.jpg"
+                  alt="Solana Tokenized Stock Cryptographic Collateral Vault"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60" />
+                <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-cyan-500/30 text-xs font-mono text-cyan-400">
+                  <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+                  Token-2022 Verified Vaults
+                </div>
+              </div>
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-bold text-foreground">Cryptographic Collateral Reserve</h3>
+                  <span className="text-xs font-mono text-cyan-400 font-bold">1:1 Backed</span>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Real-time custodian attestation matching onchain token supply with prime broker collateral holdings. Instant redemption rails with sub-second finality.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ─── SECTION 3: MITIGATOR SCORE (8-FACTOR MODEL) ─── */}
       <section className="relative py-28 px-6 border-b border-border/30 overflow-hidden">
         <div className="max-w-7xl mx-auto relative">
@@ -639,6 +726,11 @@ export default function LandingPage() {
           </GlassPanel>
         </div>
       </section>
+
+      {/* ─── INTERACTIVE 3D SIMULATED TRADE COCKPIT ─── */}
+      <div data-gsap="fade-up">
+        <SimulatedTradeWindow />
+      </div>
 
       {/* ─── SECTION 6: FINAL CTA ─── */}
       <section className="relative py-32 md:py-40 px-6 overflow-hidden">

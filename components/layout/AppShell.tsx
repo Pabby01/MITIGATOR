@@ -77,7 +77,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-background ambient-page-bg selection:bg-primary/20 selection:text-primary">
       {/* ─── SIDEBAR ─── */}
       <aside
         className={cn(
@@ -277,8 +277,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto scrollbar-thin">
-          {children}
+        <main className="flex-1 overflow-y-auto scrollbar-thin relative">
+          <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
+          <div className="absolute bottom-10 left-10 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
+          <div className="relative z-0">
+            {children}
+          </div>
         </main>
       </div>
 
