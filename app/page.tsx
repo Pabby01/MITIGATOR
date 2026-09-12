@@ -49,6 +49,16 @@ const GsapScrollEffects = dynamic(
   { ssr: false }
 );
 
+const LiveExecutionRouter = dynamic(
+  () => import('@/components/landing/LiveExecutionRouter').then((m) => m.LiveExecutionRouter),
+  { ssr: false }
+);
+
+const InteractiveCtaSection = dynamic(
+  () => import('@/components/landing/InteractiveCtaSection').then((m) => m.InteractiveCtaSection),
+  { ssr: false }
+);
+
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
   visible: (i: number) => ({
@@ -652,108 +662,16 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── SECTION 5: EXECUTION ROUTER COMPARISON ─── */}
-      <section className="relative py-28 px-6 border-b border-border/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="max-w-2xl mb-12">
-            <p className="text-xs font-mono font-semibold tracking-widest text-primary uppercase">Execution Architecture</p>
-            <h2 className="mt-3 text-3xl md:text-5xl font-extrabold tracking-tight">
-              Route every trade to the optimal venue.
-            </h2>
-            <p className="mt-4 text-base text-muted-foreground leading-relaxed">
-              Compare live indicative and executable quotes across Solana AMMs and RFQ providers. Inspect expected output, fee drag, and slippage before you sign.
-            </p>
-          </div>
-
-          <GlassPanel className="overflow-hidden hairline-card rounded-3xl">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border/60 text-xs font-mono text-muted-foreground uppercase tracking-wider bg-card/30">
-                    <th className="text-left font-medium px-5 py-4">Venue</th>
-                    <th className="text-right font-medium px-4 py-4">Quoted Price</th>
-                    <th className="text-right font-medium px-4 py-4">Spread</th>
-                    <th className="text-right font-medium px-4 py-4">Est. Slippage</th>
-                    <th className="text-right font-medium px-4 py-4">Fee</th>
-                    <th className="text-center font-medium px-4 py-4">Quote Type</th>
-                    <th className="text-right font-medium px-5 py-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm">
-                  {[
-                    { venue: 'Jupiter V6 Aggregator', price: '$184.31', spread: '0.05%', slip: '0.08%', fee: '0.00%', type: 'Indicative', best: true },
-                    { venue: 'Orca Whirlpools', price: '$184.37', spread: '0.08%', slip: '0.10%', fee: '0.20%', type: 'Indicative', best: false },
-                    { venue: 'Raydium CPMM', price: '$184.44', spread: '0.12%', slip: '0.15%', fee: '0.25%', type: 'Indicative', best: false },
-                    { venue: 'Meteora DLMM', price: '$184.40', spread: '0.10%', slip: '0.12%', fee: '0.22%', type: 'Indicative', best: false },
-                    { venue: 'xChange RFQ', price: '$184.28', spread: '0.03%', slip: '0.02%', fee: '0.10%', type: 'Executable', best: false },
-                  ].map((row, i) => (
-                    <tr key={i} className="border-b border-border/40 hover:bg-card/50 transition-colors">
-                      <td className="px-5 py-3.5 font-medium">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold">{row.venue}</span>
-                          {row.best && (
-                            <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
-                              BEST ROUTE
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3.5 text-right font-mono tabular-nums">{row.price}</td>
-                      <td className="px-4 py-3.5 text-right font-mono tabular-nums text-muted-foreground">{row.spread}</td>
-                      <td className="px-4 py-3.5 text-right font-mono tabular-nums text-muted-foreground">{row.slip}</td>
-                      <td className="px-4 py-3.5 text-right font-mono tabular-nums text-muted-foreground">{row.fee}</td>
-                      <td className="px-4 py-3.5 text-center">
-                        <span className={cn(
-                          'text-[10px] font-mono font-medium px-2 py-0.5 rounded',
-                          row.type === 'Executable' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-cyan-500/10 text-cyan-400'
-                        )}>
-                          {row.type}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 text-right font-mono text-xs text-emerald-400">Active</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </GlassPanel>
-        </div>
-      </section>
+      {/* ─── SECTION 5: DYNAMIC LIVE EXECUTION ROUTER (MOVING FIGURES & AUTO-SORTING BEST ROUTE) ─── */}
+      <LiveExecutionRouter />
 
       {/* ─── INTERACTIVE 3D SIMULATED TRADE COCKPIT ─── */}
       <div data-gsap="fade-up">
         <SimulatedTradeWindow />
       </div>
 
-      {/* ─── SECTION 6: FINAL CTA ─── */}
-      <section className="relative py-32 md:py-40 px-6 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-        <div className="max-w-3xl mx-auto text-center relative z-10 space-y-6">
-          <BrandLogo size={56} glow className="mx-auto" />
-          <h2 className="text-4xl md:text-6xl font-extrabold tracking-tighter">
-            Trade with context.
-          </h2>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto">
-            Not another trading clone. A serious intelligence and execution layer for the tokenized economy on Solana.
-          </p>
-          <div className="pt-4 flex flex-col sm:flex-row gap-3.5 justify-center">
-            <Link
-              href="/discover"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-xl shadow-primary/25"
-            >
-              Explore Markets
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/intelligence"
-              className="inline-flex items-center justify-center gap-2 rounded-xl hairline-card px-8 py-3.5 text-sm font-semibold text-foreground hover:border-primary/40 transition-all"
-            >
-              <Brain className="h-4 w-4 text-primary" />
-              Ask AI Copilot
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* ─── SECTION 6: INTERACTIVE TYPEWRITER CTA & CURSOR-REACTIVE GLOW ─── */}
+      <InteractiveCtaSection />
 
       {/* ─── FOOTER ─── */}
       <footer className="border-t border-border/40 py-10 px-6 bg-card/20">
