@@ -20,6 +20,7 @@ import {
   Clock,
   ChevronRight,
 } from 'lucide-react';
+import { InteractiveMarketChart } from '@/components/market/InteractiveMarketChart';
 import { GlassPanel, PriceChange } from '@/components/shared/GlassPanel';
 import { ScoreRing } from '@/components/shared/ScoreRing';
 import { SourceBadge, RiskBadge, FreshnessBadge } from '@/components/shared/SourceBadge';
@@ -37,27 +38,11 @@ export default function StockDetailPage() {
   const [timeframe, setTimeframe] = useState<Timeframe>('1M');
   const [dataset, setDataset] = useState<'equity' | 'token'>('equity');
 
-  const bars = useMemo(() => getHistoricalBars(symbol, timeframe, dataset), [symbol, timeframe, dataset]);
   const news = useMemo(() => getNews(symbol), [symbol]);
   const filings = useMemo(() => getFilings(symbol), [symbol]);
   const social = useMemo(() => getSocialPosts(symbol), [symbol]);
   const timeline = useMemo(() => getTimelineEvents(symbol), [symbol]);
   const aiInsight = useMemo(() => getAIInsight(symbol, 2000), [symbol]);
-
-  const chartData = bars.map((b) => b.close);
-  const minPrice = Math.min(...chartData);
-  const maxPrice = Math.max(...chartData);
-  const chartWidth = 1000;
-  const chartHeight = 300;
-
-  const pathPoints = chartData.map((price, i) => {
-    const x = (i / (chartData.length - 1)) * chartWidth;
-    const y = chartHeight - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
-    return `${x},${y}`;
-  }).join(' ');
-
-  const areaPath = `M 0,${chartHeight} L ${pathPoints} L ${chartWidth},${chartHeight} Z`;
-  const linePath = `M ${pathPoints}`;
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
@@ -79,7 +64,12 @@ export default function StockDetailPage() {
               {symbol.slice(0, 2)}
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">{symbol}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold tracking-tight">{symbol}</h1>
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-semibold">
+                  1 Token = 1.0000 Share
+                </span>
+              </div>
               <p className="text-sm text-muted-foreground">{asset.tokenizedAsset.name}</p>
             </div>
           </div>
@@ -88,8 +78,12 @@ export default function StockDetailPage() {
             <PriceChange change={asset.quote.change24h} pct={asset.quote.changePct24h} className="text-lg" />
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-            <span className="flex items-center gap-1 text-emerald-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> Market Open
+            <span className="flex items-center gap-1 text-emerald-400 font-mono">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> Solana 24/7 Secondary: Live
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span className="flex items-center gap-1 text-amber-400 font-mono">
+              <Clock className="h-3 w-3" /> TradFi Market: Closed
             </span>
             <span className="text-muted-foreground">·</span>
             <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 className="h-3 w-3" /> Token Verified</span>
@@ -112,7 +106,7 @@ export default function StockDetailPage() {
 
       {/* Token info bar */}
       <GlassPanel className="p-4">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 text-sm">
           <div>
             <p className="text-xs text-muted-foreground">Issuer</p>
             <p className="font-medium">{asset.tokenizedAsset.issuer.name}</p>
@@ -136,6 +130,14 @@ export default function StockDetailPage() {
           <div>
             <p className="text-xs text-muted-foreground">Beta</p>
             <p className="font-medium tabular-nums">{asset.tokenizedAsset.underlying.beta}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Corporate Multiplier</p>
+            <p className="font-medium font-mono text-cyan-400 tabular-nums">1.0000x</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Solana Standard</p>
+            <p className="font-medium font-mono text-emerald-400">Token-2022</p>
           </div>
         </div>
       </GlassPanel>
@@ -169,77 +171,13 @@ export default function StockDetailPage() {
       {/* Tab content */}
       {tab === 'overview' && (
         <div className="space-y-6">
-          {/* Chart */}
-          <GlassPanel className="p-5">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
-              <div className="flex items-center gap-1">
-                {(['1D', '1W', '1M', '3M', '6M', 'YTD', '1Y', '5Y', 'MAX'] as Timeframe[]).map((tf) => (
-                  <button
-                    key={tf}
-                    onClick={() => setTimeframe(tf)}
-                    className={cn(
-                      'px-2.5 py-1 rounded text-xs font-medium transition-colors',
-                      timeframe === tf ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    {tf}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setDataset('equity')}
-                  className={cn(
-                    'px-3 py-1 rounded text-xs font-medium transition-colors',
-                    dataset === 'equity' ? 'bg-cyan-500/10 text-cyan-400' : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  Underlying Equity
-                </button>
-                <button
-                  onClick={() => setDataset('token')}
-                  className={cn(
-                    'px-3 py-1 rounded text-xs font-medium transition-colors',
-                    dataset === 'token' ? 'bg-emerald-500/10 text-emerald-400' : 'text-muted-foreground hover:text-foreground'
-                  )}
-                >
-                  Token / Onchain
-                </button>
-              </div>
-            </div>
-
-            {/* Chart SVG */}
-            <div className="relative">
-              <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-[300px]" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={dataset === 'equity' ? '#4cc9f0' : '#3fb98a'} stopOpacity="0.2" />
-                    <stop offset="100%" stopColor={dataset === 'equity' ? '#4cc9f0' : '#3fb98a'} stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                {/* Grid lines */}
-                {[0, 0.25, 0.5, 0.75, 1].map((p) => (
-                  <line key={p} x1="0" y1={p * chartHeight} x2={chartWidth} y2={p * chartHeight} stroke="hsl(220 18% 14%)" strokeWidth="1" strokeDasharray="4 4" />
-                ))}
-                <path d={areaPath} fill="url(#chartGradient)" />
-                <path d={linePath} fill="none" stroke={dataset === 'equity' ? '#4cc9f0' : '#3fb98a'} strokeWidth="2" />
-              </svg>
-              {/* Y-axis labels */}
-              <div className="absolute right-2 top-0 h-full flex flex-col justify-between py-1 text-[10px] text-muted-foreground tabular-nums">
-                <span>${maxPrice.toFixed(2)}</span>
-                <span>${((maxPrice + minPrice) / 2).toFixed(2)}</span>
-                <span>${minPrice.toFixed(2)}</span>
-              </div>
-            </div>
-
-            <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-              <span>{bars.length} data points · {dataset === 'equity' ? 'Underlying equity OHLCV' : 'Onchain token swap history'}</span>
-              <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-cyan-400" /> Equity</span>
-                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Token</span>
-              </div>
-            </div>
-          </GlassPanel>
+          {/* Interactive Candlestick / Line Chart */}
+          <InteractiveMarketChart
+            symbol={symbol}
+            initialTimeframe={timeframe}
+            initialDataset={dataset}
+            showControls={true}
+          />
 
           {/* MITIGATOR Score breakdown */}
           <div className="grid lg:grid-cols-2 gap-4">

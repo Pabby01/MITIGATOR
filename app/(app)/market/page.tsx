@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -16,6 +17,19 @@ import { GlassPanel, PriceChange } from '@/components/shared/GlassPanel';
 import { RiskBadge } from '@/components/shared/SourceBadge';
 import { getAllAssets } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
+
+const MarketUniverse = dynamic(
+  () => import('@/components/three/MarketUniverse').then((m) => m.MarketUniverse),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[580px] w-full rounded-2xl bg-card/20 border border-border/50 animate-pulse flex flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+        <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        <p className="font-mono text-xs">Initializing WebGL 3D Market Universe...</p>
+      </div>
+    ),
+  }
+);
 
 type ViewMode = 'cards' | 'table' | '3d';
 
@@ -208,13 +222,26 @@ export default function MarketDiscoveryPage() {
         </GlassPanel>
       )}
 
-      {/* 3D view placeholder */}
+      {/* 3D view */}
       {view === '3d' && (
-        <GlassPanel className="p-12 flex flex-col items-center justify-center min-h-[400px]">
-          <Globe className="h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-sm text-muted-foreground">3D Market Map — Interactive WebGL visualization of the tokenized stock universe</p>
-          <p className="text-xs text-muted-foreground mt-2">Coming soon with the full 3D market map experience</p>
-        </GlassPanel>
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+            <div>
+              <h2 className="text-base font-semibold">3D Tokenized Stock Galaxy</h2>
+              <p className="text-xs text-muted-foreground">
+                Orbital node visualization of live Solana assets. Node size reflects liquidity; color reflects MITIGATOR Risk Score. Click any node badge to inspect.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 text-xs font-mono">
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Low Risk</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-400" /> Moderate</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-red-400" /> High Risk</span>
+            </div>
+          </div>
+          <div className="relative rounded-2xl overflow-hidden border border-border/70 bg-card/20 shadow-2xl h-[580px] w-full">
+            <MarketUniverse className="w-full h-full" interactive={true} />
+          </div>
+        </div>
       )}
 
       {filtered.length === 0 && (

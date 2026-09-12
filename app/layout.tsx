@@ -16,14 +16,26 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   title: 'MITIGATOR — Know the risk. Before you trade.',
   description:
-    'AI-powered intelligence, risk analysis and execution for tokenized stocks on Solana.',
+    'Solana-native tokenized-stock intelligence, risk analysis, portfolio and execution platform for Stocklana 2026.',
+  icons: {
+    icon: '/brand/miti.jpeg',
+    apple: '/brand/miti.jpeg',
+  },
   openGraph: {
     title: 'MITIGATOR — Know the risk. Before you trade.',
     description:
       'AI-powered intelligence, risk analysis and execution for tokenized stocks on Solana.',
+    images: ['/brand/miti.jpeg'],
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MITIGATOR — Know the risk. Before you trade.',
+    description: 'AI-powered intelligence, risk analysis and execution for tokenized stocks on Solana.',
+    images: ['/brand/miti.jpeg'],
   },
 };
 
