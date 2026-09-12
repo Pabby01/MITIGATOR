@@ -1,6 +1,7 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { useEffect, useState, useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
 
 type ScoreRingProps = {
   score: number;
@@ -31,8 +32,40 @@ export function ScoreRing({
   const offset = circumference - (score / 100) * circumference;
   const color = getScoreColor(score);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(containerRef, { once: false, amount: 0.5 });
+  const [displayScore, setDisplayScore] = useState(0);
+
+  useEffect(() => {
+    if (!isInView) {
+      setDisplayScore(0);
+      return;
+    }
+
+    let start = 0;
+    const duration = 1400; // ms
+    const startTime = performance.now();
+
+    const animateCount = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out cubic
+      const easeOut = 1 - Math.pow(1 - progress, 3);
+      const currentVal = Math.round(easeOut * score);
+
+      setDisplayScore(currentVal);
+
+      if (progress < 1) {
+        requestAnimationFrame(animateCount);
+      }
+    };
+
+    const animId = requestAnimationFrame(animateCount);
+    return () => cancelAnimationFrame(animId);
+  }, [isInView, score]);
+
   return (
-    <div className={`relative inline-flex flex-col items-center ${className}`}>
+    <div ref={containerRef} className={`relative inline-flex flex-col items-center ${className}`}>
       <svg width={size} height={size} className="transform -rotate-90">
         <circle
           cx={size / 2}
@@ -52,21 +85,18 @@ export function ScoreRing({
           strokeLinecap="round"
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
-          style={{ filter: `drop-shadow(0 0 6px ${color}40)` }}
+          animate={{ strokeDashoffset: isInView ? offset : circumference }}
+          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+          style={{ filter: `drop-shadow(0 0 8px ${color}50)` }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <motion.span
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
-          className="text-3xl font-bold tabular-nums"
+        <span
+          className="text-4xl font-extrabold tabular-nums transition-all"
           style={{ color }}
         >
-          {score}
-        </motion.span>
+          {displayScore}
+        </span>
         {showLabel && (
           <span className="text-[9px] font-medium tracking-widest text-muted-foreground mt-0.5">
             {label}

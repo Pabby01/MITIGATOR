@@ -30,6 +30,7 @@ import { GlassPanel, MetricCard } from '@/components/shared/GlassPanel';
 import { SourceBadge, RiskBadge } from '@/components/shared/SourceBadge';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { BrandLogo } from '@/components/shared/BrandLogo';
+import { AnimatedFactorBar } from '@/components/landing/AnimatedFactorBar';
 import { getAllAssets } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 
@@ -417,7 +418,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3.5">
+          <div id="dimension-container" className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3.5">
             {[
               { icon: TrendingUp, label: 'Market Depth', tier: 'VERIFIED' as const, desc: 'Real-time orderbooks' },
               { icon: Layers, label: 'Fundamentals', tier: 'CANONICAL' as const, desc: 'P/E, Beta, Earnings' },
@@ -427,7 +428,7 @@ export default function LandingPage() {
               { icon: Target, label: 'Corporate Catalysts', tier: 'PRIMARY' as const, desc: 'Splits & Dividends' },
               { icon: ShieldCheck, label: 'Portfolio Fit', tier: 'VERIFIED' as const, desc: 'Correlation analysis' },
             ].map((item, i) => (
-              <GlassPanel key={i} hover className="p-4.5 text-center hairline-card rounded-2xl">
+              <GlassPanel key={i} hover className="dimension-box p-4.5 text-center hairline-card rounded-2xl">
                 <div className="mx-auto rounded-xl bg-primary/10 p-2.5 w-fit">
                   <item.icon className="h-5 w-5 text-primary" />
                 </div>
@@ -443,7 +444,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── SECTION 2.5: ARCHITECTURE & TELEMETRY SHOWCASE (GENERATED IMAGES) ─── */}
-      <section data-gsap="fade-up" className="relative py-28 px-6 border-b border-border/30 overflow-hidden bg-card/10">
+      <section id="showcase-section" style={{ perspective: 1400 }} className="relative py-28 px-6 border-b border-border/30 overflow-hidden bg-card/15">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-mono text-primary mb-3">
@@ -453,13 +454,13 @@ export default function LandingPage() {
               Designed for Solana. <span className="text-gradient-primary">Engineered for Capital.</span>
             </h2>
             <p className="mt-4 text-base text-muted-foreground leading-relaxed">
-              Explore MITIGATOR's dual-engine interface: real-time institutional multi-factor risk radar and 1:1 cryptographic collateral vaults.
+              Explore MITIGATOR&apos;s dual-engine interface: real-time institutional multi-factor risk radar and 1:1 cryptographic collateral vaults.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
             {/* Image Card 1 */}
-            <div data-gsap="parallax" className="hairline-card rounded-3xl overflow-hidden p-3.5 border border-white/10 flex flex-col justify-between group">
+            <div className="showcase-card-left hairline-card rounded-3xl overflow-hidden p-3.5 border border-white/10 flex flex-col justify-between group">
               <div className="relative rounded-2xl overflow-hidden aspect-[16/9] w-full bg-card/60">
                 <img
                   src="/images/terminal-preview.jpg"
@@ -485,7 +486,7 @@ export default function LandingPage() {
             </div>
 
             {/* Image Card 2 */}
-            <div data-gsap="parallax" className="hairline-card rounded-3xl overflow-hidden p-3.5 border border-white/10 flex flex-col justify-between group">
+            <div className="showcase-card-right hairline-card rounded-3xl overflow-hidden p-3.5 border border-white/10 flex flex-col justify-between group">
               <div className="relative rounded-2xl overflow-hidden aspect-[16/9] w-full bg-card/60">
                 <img
                   src="/images/vault-preview.jpg"
@@ -537,21 +538,13 @@ export default function LandingPage() {
                   { label: 'Portfolio Concentration Fit', weight: '10%', score: 74 },
                   { label: 'Data Confidence & Provenance', weight: '5%', score: 95 },
                 ].map((f, i) => (
-                  <div key={i} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-foreground">{f.label}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground font-mono">{f.weight}</span>
-                        <span className="font-bold text-emerald-400 font-mono">{f.score}/100</span>
-                      </div>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-border/60 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-                        style={{ width: `${f.score}%` }}
-                      />
-                    </div>
-                  </div>
+                  <AnimatedFactorBar
+                    key={i}
+                    index={i}
+                    label={f.label}
+                    weight={f.weight}
+                    score={f.score}
+                  />
                 ))}
               </div>
             </div>
