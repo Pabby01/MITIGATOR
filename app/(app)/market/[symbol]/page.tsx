@@ -1,0 +1,504 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import {
+  ArrowLeft,
+  ShieldCheck,
+  CheckCircle2,
+  Database,
+  Activity,
+  TrendingUp,
+  TrendingDown,
+  Brain,
+  Sparkles,
+  FileText,
+  Newspaper,
+  MessageSquare,
+  Clock,
+  ChevronRight,
+} from 'lucide-react';
+import { GlassPanel, PriceChange } from '@/components/shared/GlassPanel';
+import { ScoreRing } from '@/components/shared/ScoreRing';
+import { SourceBadge, RiskBadge, FreshnessBadge } from '@/components/shared/SourceBadge';
+import { getAsset, getHistoricalBars, getNews, getFilings, getSocialPosts, getTimelineEvents, getAIInsight } from '@/lib/mock-data';
+import { cn } from '@/lib/utils';
+
+type Tab = 'overview' | 'news' | 'filings' | 'social' | 'timeline' | 'ai';
+type Timeframe = '1D' | '1W' | '1M' | '3M' | '6M' | 'YTD' | '1Y' | '5Y' | 'MAX';
+
+export default function StockDetailPage() {
+  const params = useParams();
+  const symbol = (params?.symbol as string) || 'NVDAx';
+  const asset = getAsset(symbol);
+  const [tab, setTab] = useState<Tab>('overview');
+  const [timeframe, setTimeframe] = useState<Timeframe>('1M');
+  const [dataset, setDataset] = useState<'equity' | 'token'>('equity');
+
+  const bars = useMemo(() => getHistoricalBars(symbol, timeframe, dataset), [symbol, timeframe, dataset]);
+  const news = useMemo(() => getNews(symbol), [symbol]);
+  const filings = useMemo(() => getFilings(symbol), [symbol]);
+  const social = useMemo(() => getSocialPosts(symbol), [symbol]);
+  const timeline = useMemo(() => getTimelineEvents(symbol), [symbol]);
+  const aiInsight = useMemo(() => getAIInsight(symbol, 2000), [symbol]);
+
+  const chartData = bars.map((b) => b.close);
+  const minPrice = Math.min(...chartData);
+  const maxPrice = Math.max(...chartData);
+  const chartWidth = 1000;
+  const chartHeight = 300;
+
+  const pathPoints = chartData.map((price, i) => {
+    const x = (i / (chartData.length - 1)) * chartWidth;
+    const y = chartHeight - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
+    return `${x},${y}`;
+  }).join(' ');
+
+  const areaPath = `M 0,${chartHeight} L ${pathPoints} L ${chartWidth},${chartHeight} Z`;
+  const linePath = `M ${pathPoints}`;
+
+  return (
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+      {/* Breadcrumb + back */}
+      <div className="flex items-center gap-2 text-sm">
+        <Link href="/market" className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Markets
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="font-medium">{symbol}</span>
+      </div>
+
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-lg font-bold">
+              {symbol.slice(0, 2)}
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">{symbol}</h1>
+              <p className="text-sm text-muted-foreground">{asset.tokenizedAsset.name}</p>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center gap-4">
+            <span className="text-3xl font-bold tabular-nums">${asset.quote.price.toFixed(2)}</span>
+            <PriceChange change={asset.quote.change24h} pct={asset.quote.changePct24h} className="text-lg" />
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <span className="flex items-center gap-1 text-emerald-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> Market Open
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 className="h-3 w-3" /> Token Verified</span>
+            <span className="text-muted-foreground">·</span>
+            <span className="flex items-center gap-1 text-emerald-400"><Database className="h-3 w-3" /> Oracle Healthy</span>
+            <span className="text-muted-foreground">·</span>
+            <span className="flex items-center gap-1 text-emerald-400"><Activity className="h-3 w-3" /> Liquidity Strong</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <ScoreRing score={asset.riskScore.overall} size={100} strokeWidth={6} showLabel={true} />
+          <div className="flex flex-col gap-2">
+            <RiskBadge level={asset.riskScore.level} />
+            <FreshnessBadge freshness={asset.riskScore.freshness} />
+            <span className="text-xs text-muted-foreground">Confidence: <span className="text-foreground font-medium">{(asset.riskScore.confidence * 100).toFixed(0)}%</span></span>
+          </div>
+        </div>
+      </div>
+
+      {/* Token info bar */}
+      <GlassPanel className="p-4">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
+          <div>
+            <p className="text-xs text-muted-foreground">Issuer</p>
+            <p className="font-medium">{asset.tokenizedAsset.issuer.name}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Oracle</p>
+            <p className="font-medium">{asset.tokenizedAsset.oracle.provider}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Backing Ratio</p>
+            <p className="font-medium tabular-nums">{asset.tokenizedAsset.backingRatio.toFixed(2)}:1</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Sector</p>
+            <p className="font-medium">{asset.tokenizedAsset.underlying.sector}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">P/E Ratio</p>
+            <p className="font-medium tabular-nums">{asset.tokenizedAsset.underlying.peRatio}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Beta</p>
+            <p className="font-medium tabular-nums">{asset.tokenizedAsset.underlying.beta}</p>
+          </div>
+        </div>
+      </GlassPanel>
+
+      {/* Tabs */}
+      <div className="flex items-center gap-1 border-b border-border overflow-x-auto scrollbar-thin">
+        {[
+          { key: 'overview' as const, label: 'Overview', icon: Activity },
+          { key: 'news' as const, label: 'News', icon: Newspaper },
+          { key: 'filings' as const, label: 'Filings', icon: FileText },
+          { key: 'social' as const, label: 'Community', icon: MessageSquare },
+          { key: 'timeline' as const, label: 'Timeline', icon: Clock },
+          { key: 'ai' as const, label: 'AI Copilot', icon: Brain },
+        ].map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2.5 text-sm transition-colors border-b-2 -mb-px whitespace-nowrap',
+              tab === key
+                ? 'border-primary text-primary font-medium'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      {tab === 'overview' && (
+        <div className="space-y-6">
+          {/* Chart */}
+          <GlassPanel className="p-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-1">
+                {(['1D', '1W', '1M', '3M', '6M', 'YTD', '1Y', '5Y', 'MAX'] as Timeframe[]).map((tf) => (
+                  <button
+                    key={tf}
+                    onClick={() => setTimeframe(tf)}
+                    className={cn(
+                      'px-2.5 py-1 rounded text-xs font-medium transition-colors',
+                      timeframe === tf ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {tf}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setDataset('equity')}
+                  className={cn(
+                    'px-3 py-1 rounded text-xs font-medium transition-colors',
+                    dataset === 'equity' ? 'bg-cyan-500/10 text-cyan-400' : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Underlying Equity
+                </button>
+                <button
+                  onClick={() => setDataset('token')}
+                  className={cn(
+                    'px-3 py-1 rounded text-xs font-medium transition-colors',
+                    dataset === 'token' ? 'bg-emerald-500/10 text-emerald-400' : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Token / Onchain
+                </button>
+              </div>
+            </div>
+
+            {/* Chart SVG */}
+            <div className="relative">
+              <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-[300px]" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={dataset === 'equity' ? '#4cc9f0' : '#3fb98a'} stopOpacity="0.2" />
+                    <stop offset="100%" stopColor={dataset === 'equity' ? '#4cc9f0' : '#3fb98a'} stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                {/* Grid lines */}
+                {[0, 0.25, 0.5, 0.75, 1].map((p) => (
+                  <line key={p} x1="0" y1={p * chartHeight} x2={chartWidth} y2={p * chartHeight} stroke="hsl(220 18% 14%)" strokeWidth="1" strokeDasharray="4 4" />
+                ))}
+                <path d={areaPath} fill="url(#chartGradient)" />
+                <path d={linePath} fill="none" stroke={dataset === 'equity' ? '#4cc9f0' : '#3fb98a'} strokeWidth="2" />
+              </svg>
+              {/* Y-axis labels */}
+              <div className="absolute right-2 top-0 h-full flex flex-col justify-between py-1 text-[10px] text-muted-foreground tabular-nums">
+                <span>${maxPrice.toFixed(2)}</span>
+                <span>${((maxPrice + minPrice) / 2).toFixed(2)}</span>
+                <span>${minPrice.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+              <span>{bars.length} data points · {dataset === 'equity' ? 'Underlying equity OHLCV' : 'Onchain token swap history'}</span>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-cyan-400" /> Equity</span>
+                <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Token</span>
+              </div>
+            </div>
+          </GlassPanel>
+
+          {/* MITIGATOR Score breakdown */}
+          <div className="grid lg:grid-cols-2 gap-4">
+            <GlassPanel className="p-5">
+              <h3 className="text-sm font-semibold tracking-wide mb-4">MITIGATOR Score Breakdown</h3>
+              <div className="space-y-3">
+                {asset.riskScore.factors.map((factor) => (
+                  <div key={factor.key}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium">{factor.label}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground tabular-nums">{factor.weight}%</span>
+                        <span className={cn(
+                          'text-sm font-bold tabular-nums',
+                          factor.score >= 75 ? 'text-emerald-400' : factor.score >= 60 ? 'text-amber-400' : 'text-red-400'
+                        )}>
+                          {factor.score}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-border overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${factor.score}%` }}
+                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                        className="h-full rounded-full"
+                        style={{
+                          backgroundColor: factor.score >= 75 ? '#3fb98a' : factor.score >= 60 ? '#f59e0b' : '#ef4444',
+                        }}
+                      />
+                    </div>
+                    <p className="mt-1 text-[10px] text-muted-foreground">{factor.description}</p>
+                  </div>
+                ))}
+              </div>
+            </GlassPanel>
+
+            {/* Quick AI */}
+            <GlassPanel hover className="p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="rounded-lg bg-primary/10 p-1.5">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <h3 className="text-sm font-semibold tracking-wide">AI Quick Analysis</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="rounded-lg border border-border p-3">
+                  <p className="text-xs font-semibold text-emerald-400 tracking-widest uppercase mb-1">Verdict</p>
+                  <p className="text-sm">{aiInsight.verdict}</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <SourceBadge tier="VERIFIED" />
+                    <span className="text-[10px] text-muted-foreground">{(aiInsight.confidence * 100).toFixed(0)}% confidence</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setTab('ai')}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg border border-border py-2.5 text-xs text-muted-foreground hover:border-primary/30 hover:text-foreground transition-colors"
+                >
+                  <Brain className="h-3.5 w-3.5" />
+                  Full AI Analysis
+                  <ChevronRight className="h-3 w-3" />
+                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Link href="/risk" className="flex items-center justify-center gap-1.5 rounded-lg bg-card/50 py-2 text-xs hover:bg-card transition-colors">
+                    <ShieldCheck className="h-3.5 w-3.5 text-amber-400" />
+                    Risk Center
+                  </Link>
+                  <Link href="/execution" className="flex items-center justify-center gap-1.5 rounded-lg bg-card/50 py-2 text-xs hover:bg-card transition-colors">
+                    <Activity className="h-3.5 w-3.5 text-cyan-400" />
+                    Execution
+                  </Link>
+                </div>
+              </div>
+            </GlassPanel>
+          </div>
+        </div>
+      )}
+
+      {/* News tab */}
+      {tab === 'news' && (
+        <div className="space-y-3">
+          {news.map((item, i) => (
+            <motion.div key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+              <GlassPanel hover className="p-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded',
+                      item.sentiment === 'positive' ? 'bg-emerald-500/10 text-emerald-400' :
+                      item.sentiment === 'negative' ? 'bg-red-500/10 text-red-400' :
+                      'bg-zinc-500/10 text-zinc-400'
+                    )}>
+                      {item.sentiment}
+                    </span>
+                    {item.importance === 'high' && (
+                      <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">High Impact</span>
+                    )}
+                  </div>
+                  <SourceBadge tier={item.sourceTier} />
+                </div>
+                <h3 className="text-sm font-semibold mb-1">{item.headline}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">{item.summary}</p>
+                <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>{item.source}</span>
+                  <span>·</span>
+                  <span>{new Date(item.publishedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              </GlassPanel>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Filings tab */}
+      {tab === 'filings' && (
+        <div className="space-y-3">
+          {filings.map((filing, i) => (
+            <motion.div key={filing.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+              <GlassPanel hover className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-primary/10 p-2">
+                    <FileText className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold tracking-wider bg-card px-2 py-0.5 rounded">{filing.type}</span>
+                      <SourceBadge tier={filing.sourceTier} />
+                    </div>
+                    <p className="mt-1 text-sm font-medium">{filing.title}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(filing.filedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </GlassPanel>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Social tab */}
+      {tab === 'social' && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+            <ShieldCheck className="h-4 w-4 text-amber-400 flex-shrink-0" />
+            <p className="text-xs text-muted-foreground">Community posts are social signals, not verified financial facts. Always check the source tier.</p>
+          </div>
+          {social.map((post, i) => (
+            <motion.div key={post.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+              <GlassPanel hover className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/30 to-accent/30" />
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium">{post.author}</p>
+                        {post.verified && <CheckCircle2 className="h-3 w-3 text-primary" />}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{post.handle} · {post.platform}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded',
+                      post.sentiment === 'bullish' ? 'bg-emerald-500/10 text-emerald-400' :
+                      post.sentiment === 'bearish' ? 'bg-red-500/10 text-red-400' :
+                      'bg-zinc-500/10 text-zinc-400'
+                    )}>
+                      {post.sentiment}
+                    </span>
+                    <SourceBadge tier={post.sourceTier} />
+                  </div>
+                </div>
+                <p className="text-sm leading-relaxed">{post.content}</p>
+                <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+                  <span>{post.engagement.likes} likes</span>
+                  <span>{post.engagement.replies} replies</span>
+                  <span>{post.engagement.reposts} reposts</span>
+                  {post.evidenceAttached && <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 className="h-3 w-3" /> Evidence</span>}
+                  <span className="ml-auto">{new Date(post.postedAt).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              </GlassPanel>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Timeline tab */}
+      {tab === 'timeline' && (
+        <GlassPanel className="p-5">
+          <h3 className="text-sm font-semibold tracking-wide mb-4">Market Timeline</h3>
+          <div className="relative pl-6 space-y-4">
+            <div className="absolute left-2 top-2 bottom-2 w-px bg-border" />
+            {timeline.map((event, i) => (
+              <motion.div key={event.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="relative">
+                <div className={cn(
+                  'absolute -left-[20px] top-1.5 h-3 w-3 rounded-full border-2 border-background',
+                  event.impact === 'positive' ? 'bg-emerald-400' : event.impact === 'negative' ? 'bg-red-400' : 'bg-cyan-400'
+                )} />
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{event.type.replace(/_/g, ' ')}</span>
+                      {event.importance === 'high' && <span className="text-[10px] font-semibold text-amber-400 uppercase">High</span>}
+                    </div>
+                    <p className="mt-0.5 text-sm font-medium">{event.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{event.description}</p>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground">{event.source}</span>
+                      <SourceBadge tier={event.sourceTier} />
+                      <span className="text-[10px] text-muted-foreground">Confidence: {(event.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                  </div>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">{new Date(event.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </GlassPanel>
+      )}
+
+      {/* AI Copilot tab */}
+      {tab === 'ai' && (
+        <div className="space-y-4">
+          <GlassPanel className="p-4 flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Brain className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium">{aiInsight.query}</p>
+              <p className="text-xs text-muted-foreground">Model: {aiInsight.modelVersion} · Confidence: {(aiInsight.confidence * 100).toFixed(0)}%</p>
+            </div>
+          </GlassPanel>
+
+          {aiInsight.sections.map((section, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+              <GlassPanel className="p-4">
+                <div className="flex items-start justify-between mb-2">
+                  <p className="text-xs font-bold tracking-widest text-primary uppercase">{section.label}</p>
+                  <span className="text-[10px] text-muted-foreground">{(section.confidence * 100).toFixed(0)}% confidence</span>
+                </div>
+                <p className="text-sm leading-relaxed">{section.content}</p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {section.sources.map((source, j) => (
+                    <SourceBadge key={j} tier={source.tier} />
+                  ))}
+                  {section.sources.map((source, j) => (
+                    <span key={`label-${j}`} className="text-[10px] text-muted-foreground">{source.label}</span>
+                  ))}
+                </div>
+              </GlassPanel>
+            </motion.div>
+          ))}
+
+          <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+            <ShieldCheck className="h-4 w-4 text-amber-400 flex-shrink-0" />
+            <p className="text-xs text-muted-foreground">AI analysis is probabilistic, not financial advice. Every claim has a source. Verify before trading.</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
