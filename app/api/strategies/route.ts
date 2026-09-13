@@ -6,6 +6,8 @@ import {
   copyStrategy,
   deployPaperStrategy,
   createCustomStrategy,
+  deleteCustomStrategy,
+  cancelCopyStrategy,
 } from '@/lib/services/strategies-service';
 
 export const dynamic = 'force-dynamic';
@@ -73,6 +75,16 @@ export async function POST(req: NextRequest) {
     if (action === 'paper') {
       const result = await deployPaperStrategy(userAddress, strategyId, allocationUsd);
       return NextResponse.json(result);
+    }
+
+    if (action === 'delete') {
+      const success = await deleteCustomStrategy(strategyId);
+      return NextResponse.json({ success });
+    }
+
+    if (action === 'cancel_copy') {
+      const success = await cancelCopyStrategy(userAddress, strategyId);
+      return NextResponse.json({ success });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

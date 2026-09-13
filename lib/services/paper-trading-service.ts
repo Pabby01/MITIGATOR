@@ -305,3 +305,52 @@ export async function closePaperPosition(userAddress: string, tradeId: string): 
 
   return true;
 }
+
+/**
+ * Reset paper portfolio back to initial $100,000 cash balance and clear all trades
+ */
+export async function resetPaperPortfolio(userAddress: string = 'guest'): Promise<PaperPortfolioSummary> {
+  const addr = userAddress || 'guest';
+
+  // 1. Clear in Supabase
+  if (isSupabaseConfigured()) {
+    const supabase = getSupabase();
+    if (supabase) {
+      try {
+        await supabase.from('paper_trades').delete().eq('user_address', addr);
+      } catch (e) {
+        console.warn('[PaperTrading] Supabase reset error:', e);
+      }
+    }
+  }
+
+  // 2. Reset in LocalStorage
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(
+        `${STORAGE_KEY_PREFIX}${addr}`,
+        JSON.stringify({
+          cashBalance: DEFAULT_CASH,
+          trades: [],
+        })
+      );
+    } catch (e) {
+      console.warn('[PaperTrading] LocalStorage reset error:', e);
+    }
+  }
+
+  return {
+    cashBalance: DEFAULT_CASH,
+    investedValue: 0,
+    totalPortfolioValue: DEFAULT_CASH,
+    totalRealizedPnl: 0,
+    totalUnrealizedPnl: 0,
+    totalPnlPct: 0,
+    winRate: 0,
+    openPositionsCount: 0,
+    totalTradesCount: 0,
+    avgSlippagePct: 0,
+    totalFeesUsd: 0,
+    trades: [],
+  };
+}

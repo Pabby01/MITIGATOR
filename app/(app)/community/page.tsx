@@ -17,6 +17,7 @@ import {
   Wallet,
   Info,
   User,
+  Trash2,
 } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { SourceBadge } from '@/components/shared/SourceBadge';
@@ -31,6 +32,7 @@ import { cn } from '@/lib/utils';
 export default function CommunityPage() {
   const assets = getAllAssets();
   const { connected, shortAddress, address, setIsModalOpen } = useSolanaWallet();
+  const userAddr = address || shortAddress || 'guest';
   const [symbol, setSymbol] = useState('NVDAx');
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [sentimentData, setSentimentData] = useState<any>(null);
@@ -126,8 +128,6 @@ export default function CommunityPage() {
   };
 
   const handleLike = async (postId: string) => {
-    const userAddr = address || shortAddress || 'guest';
-
     // Optimistic update
     setPosts((prev) =>
       prev.map((p) => {
@@ -183,8 +183,6 @@ export default function CommunityPage() {
   };
 
   const handleRepost = async (postId: string) => {
-    const userAddr = address || shortAddress || 'guest';
-
     // Optimistic update
     setPosts((prev) =>
       prev.map((p) => {
@@ -247,6 +245,28 @@ export default function CommunityPage() {
       openProfile(address || shortAddress);
     } else {
       setIsModalOpen(true);
+    }
+  };
+
+  const handleDeletePost = async (postId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (typeof window !== 'undefined' && !window.confirm('Delete this trade idea thesis?')) return;
+
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+
+    try {
+      await fetch('/api/community', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete_post',
+          symbol,
+          postId,
+          userAddress: userAddr,
+        }),
+      });
+    } catch (err) {
+      console.warn('Failed to delete post:', err);
     }
   };
 
@@ -650,6 +670,16 @@ export default function CommunityPage() {
                           {post.sentiment}
                         </span>
                         <SourceBadge tier={post.sourceTier} />
+                        {(post.authorAddress === userAddr || (userAddr === 'guest' && !post.authorAddress)) && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeletePost(post.id, e)}
+                            className="p-1 rounded text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                            title="Delete this post"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
 

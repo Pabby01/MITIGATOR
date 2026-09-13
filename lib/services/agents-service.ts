@@ -3,6 +3,7 @@ import { getLivePythPrice, PYTH_FEED_IDS } from './pyth-service';
 import { getLiveJupiterQuote } from './jupiter-service';
 import { computeMitigatorRiskScore } from './risk-engine';
 import { getCommunityPosts, computeCommunitySentiment } from './community-service';
+import { crawlFinancialNews, getAgentReachReport } from './agent-reach-service';
 
 export interface AIAgent {
   id: string;
@@ -181,19 +182,34 @@ export async function runAgentLive(agentId: string, symbol: string = 'NVDAx'): P
     }
 
     case 'news': {
-      const filings = await getLiveSECFilings(symbol).catch(() => []);
+      const [filings, crawledNews] = await Promise.all([
+        getLiveSECFilings(symbol).catch(() => []),
+        crawlFinancialNews(symbol, 4).catch(() => []),
+      ]);
       const latestForm = filings[0]?.form || 'EDGAR Feed';
+      const headlines = crawledNews.map((n) => `[${n.source}] ${n.title}`);
+
       return {
         agentId,
         timestamp,
         status: 'success',
-        confidence: 0.85,
+        confidence: crawledNews.length > 0 ? 0.92 : 0.85,
         findings: [
-          `Real-time financial disclosures scanned across SEC EDGAR and news feeds for ${symbol}`,
-          `Latest disclosure filing: Form ${latestForm} monitored for material disclosures`,
-          `Macro sentiment: Institutional demand sustained across tokenized equity trading venues`,
+          `Real-time financial disclosures scanned across SEC EDGAR and live web crawler for ${symbol}`,
+          crawledNews[0]
+            ? `Top live headline: "${crawledNews[0].title}" (${crawledNews[0].source})`
+            : `Form ${latestForm} monitored for material disclosures`,
+          crawledNews[1]
+            ? `Secondary catalyst: "${crawledNews[1].title}" (${crawledNews[1].source})`
+            : `Macro sentiment: Institutional demand sustained across tokenized equity trading venues`,
+          `SEC EDGAR: Latest disclosure Form ${latestForm} audited`,
         ],
-        telemetry: { monitoredSources: 14, adverseHeadlines: 0, latestForm },
+        telemetry: {
+          monitoredSources: 14 + crawledNews.length,
+          adverseHeadlines: crawledNews.filter((n) => n.sentiment === 'bearish').length,
+          latestForm,
+          crawledHeadlines: headlines,
+        },
       };
     }
 
@@ -219,9 +235,10 @@ export async function runAgentLive(agentId: string, symbol: string = 'NVDAx'): P
     }
 
     case 'social': {
-      const [posts, pyth] = await Promise.all([
+      const [posts, pyth, reachReport] = await Promise.all([
         getCommunityPosts(symbol).catch(() => []),
         getLivePythPrice(symbol).catch(() => null),
+        getAgentReachReport(symbol).catch(() => null),
       ]);
       const sentiment = computeCommunitySentiment(posts, symbol, {
         price: pyth?.price,
@@ -229,20 +246,24 @@ export async function runAgentLive(agentId: string, symbol: string = 'NVDAx'): P
         volume: pyth?.volume24h,
       });
 
+      const webNarrative = reachReport?.viralNarratives[0] || 'Tokenized stocks 24/7 liquidity advantage vs closed TradFi';
+
       return {
         agentId,
         timestamp,
         status: sentiment.divergenceLevel === 'HIGH' ? 'warning' : 'success',
         confidence: Math.round((sentiment.sourceIntegrityScore / 100) * 100) / 100,
         findings: [
-          `Aggregated ${posts.length} live research submissions across MITIGATOR Community for ${symbol}`,
+          `Aggregated ${posts.length} community posts & ${reachReport?.crawledSourcesCount || 0} live web sources for ${symbol}`,
           `Live Consensus: ${sentiment.bullishPct}% Bullish, ${sentiment.neutralPct}% Neutral, ${sentiment.bearishPct}% Bearish`,
+          `Agent-Reach Web Signal: ${reachReport?.sentimentScore || 50}/100 (${reachReport?.sentimentConsensus?.toUpperCase() || 'NEUTRAL'})`,
+          `Live Web Narrative: ${webNarrative}`,
           sentiment.disagreement,
-          `Top Mined Catalysts: ${sentiment.narratives}`,
         ],
         telemetry: {
           consensus: `${sentiment.bullishPct}% Bullish (${sentiment.divergenceType})`,
-          sampleSize: posts.length,
+          webSentimentScore: reachReport?.sentimentScore ?? 50,
+          sampleSize: posts.length + (reachReport?.crawledSourcesCount || 0),
           sourceIntegrity: `${sentiment.sourceIntegrityScore}%`,
           velocity: sentiment.sentimentVelocity,
           livePrice: pyth?.price ? `$${pyth.price}` : 'Par',

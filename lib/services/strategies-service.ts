@@ -231,3 +231,49 @@ export async function deployPaperStrategy(
     message: `Deployed $${virtualAmountUsd.toLocaleString()} virtual allocation to ${strat.name} in Paper Trading. Position opened on ${targetAsset}.`,
   };
 }
+
+/**
+ * Delete a custom strategy
+ */
+export async function deleteCustomStrategy(strategyId: string): Promise<boolean> {
+  if (isSupabaseConfigured()) {
+    const supabase = getSupabase();
+    if (supabase) {
+      try {
+        await supabase.from('strategies').delete().eq('id', strategyId);
+      } catch (err) {
+        console.warn('[Strategies] Supabase delete error:', err);
+      }
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    try {
+      const existing = localStorage.getItem(STORAGE_KEY_CUSTOM_STRATEGIES);
+      if (existing) {
+        const list: MarketplaceStrategy[] = JSON.parse(existing);
+        const filtered = list.filter((s) => s.id !== strategyId);
+        localStorage.setItem(STORAGE_KEY_CUSTOM_STRATEGIES, JSON.stringify(filtered));
+      }
+    } catch (err) {
+      console.warn('Failed to delete strategy locally:', err);
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Cancel copy trading or paper subscription for a strategy
+ */
+export async function cancelCopyStrategy(userAddress: string = 'guest', strategyId: string): Promise<boolean> {
+  const current = getUserSubscriptions(userAddress);
+  const updated = current.filter((s) => s.strategyId !== strategyId);
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(`${STORAGE_KEY_SUBSCRIPTIONS}${userAddress}`, JSON.stringify(updated));
+  }
+
+  return true;
+}
+

@@ -20,6 +20,7 @@ import {
   Clock,
   ChevronRight,
   ExternalLink,
+  Star,
 } from 'lucide-react';
 import { TradingViewChart } from '@/components/market/TradingViewChart';
 import { GlassPanel, PriceChange } from '@/components/shared/GlassPanel';
@@ -27,6 +28,8 @@ import { ScoreRing } from '@/components/shared/ScoreRing';
 import { SourceBadge, RiskBadge, FreshnessBadge } from '@/components/shared/SourceBadge';
 import { getAsset, getHistoricalBars, getNews, getFilings, getSocialPosts, getTimelineEvents, getAIInsight } from '@/lib/mock-data';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
+import { useSolanaWallet } from '@/lib/services/solana-wallet';
+import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/services/user-profile';
 import type { SECFiling } from '@/lib/services/sec-edgar-service';
 import { cn } from '@/lib/utils';
 
@@ -56,6 +59,31 @@ export default function StockDetailPage() {
   const [liveAiInsight, setLiveAiInsight] = useState<any>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [liveSocialPosts, setLiveSocialPosts] = useState<any[]>([]);
+
+  const { address } = useSolanaWallet();
+  const userAddress = address || 'guest';
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    getUserProfile(userAddress).then(setProfile);
+  }, [userAddress]);
+
+  const watchlist = profile?.watchlist || [];
+
+  const handleToggleWatchlist = async () => {
+    if (!profile) return;
+    const isWatched = watchlist.includes(symbol);
+    const updatedWatchlist = isWatched
+      ? watchlist.filter((s) => s !== symbol)
+      : [...watchlist, symbol];
+
+    const updatedProfile: UserProfile = {
+      ...profile,
+      watchlist: updatedWatchlist,
+    };
+    setProfile(updatedProfile);
+    await saveUserProfile(updatedProfile);
+  };
 
   useEffect(() => {
     let active = true;
@@ -145,6 +173,19 @@ export default function StockDetailPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold tracking-tight">{symbol}</h1>
+                <button
+                  type="button"
+                  onClick={handleToggleWatchlist}
+                  className={cn(
+                    "p-1.5 rounded-lg border transition-colors",
+                    watchlist.includes(symbol)
+                      ? "bg-amber-500/15 border-amber-500/40 text-amber-400"
+                      : "border-border/60 text-muted-foreground hover:text-amber-400 hover:border-amber-500/30"
+                  )}
+                  title={watchlist.includes(symbol) ? "Remove from Watchlist" : "Add to Watchlist"}
+                >
+                  <Star className={cn("h-4 w-4", watchlist.includes(symbol) && "fill-amber-400")} />
+                </button>
                 <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-semibold">
                   1 Token = 1.0000 Share
                 </span>

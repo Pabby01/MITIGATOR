@@ -18,6 +18,7 @@ import {
   Loader2,
   ExternalLink,
   ShieldAlert,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { GlassPanel } from '@/components/shared/GlassPanel';
@@ -237,6 +238,50 @@ export default function StrategiesPage() {
     }
   };
 
+  // Handle Delete Custom Strategy
+  const handleDeleteStrategy = async (stratId: string) => {
+    if (!confirm('Are you sure you want to delete this custom strategy?')) return;
+    try {
+      const res = await fetch('/api/strategies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete',
+          strategyId: stratId,
+        }),
+      });
+      if (res.ok) {
+        setStrategies((prev) => prev.filter((s) => s.id !== stratId));
+        setSubscriptions((prev) => prev.filter((s) => s.strategyId !== stratId));
+        setStatusMessage({ type: 'success', text: 'Custom strategy deleted.' });
+      }
+    } catch (err) {
+      console.error('Delete strategy error:', err);
+    }
+  };
+
+  // Handle Cancel Copy
+  const handleCancelCopy = async (stratId: string) => {
+    try {
+      const res = await fetch('/api/strategies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'cancel_copy',
+          strategyId: stratId,
+          userAddress,
+        }),
+      });
+      if (res.ok) {
+        setSubscriptions((prev) => prev.filter((s) => s.strategyId !== stratId));
+        setStatusMessage({ type: 'success', text: 'Copy trading subscription cancelled.' });
+        setCopyTargetStrat(null);
+      }
+    } catch (err) {
+      console.error('Cancel copy error:', err);
+    }
+  };
+
   // Handle Create Strategy
   const handleCreateCustomStrategy = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -443,6 +488,15 @@ export default function StrategiesPage() {
                       </span>
                     )}
                     <RiskBadge level={strat.riskLevel} />
+                    {strat.id.startsWith('strat-custom') && (
+                      <button
+                        onClick={() => handleDeleteStrategy(strat.id)}
+                        className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        title="Delete custom strategy"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
 
                   <div>
@@ -626,30 +680,42 @@ export default function StrategiesPage() {
                   </div>
                 )}
 
-                <div className="pt-2 flex items-center justify-end gap-2">
-                  <button
-                    onClick={() => setCopyTargetStrat(null)}
-                    className="px-4 py-2 rounded-lg border border-border text-xs font-medium hover:bg-card transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleExecuteCopy}
-                    disabled={actionLoadingId === copyTargetStrat.id}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shadow-md shadow-primary/20"
-                  >
-                    {actionLoadingId === copyTargetStrat.id ? (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        <span>Deploying Policy...</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span>Confirm Copy Allocation</span>
-                      </>
-                    )}
-                  </button>
+                <div className="pt-2 flex items-center justify-between gap-2">
+                  {subscriptions.some((s) => s.strategyId === copyTargetStrat.id && s.type === 'copy') && (
+                    <button
+                      type="button"
+                      onClick={() => handleCancelCopy(copyTargetStrat.id)}
+                      className="flex items-center gap-1 px-3 py-2 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/30 text-xs font-medium transition-colors"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span>Stop Copying</span>
+                    </button>
+                  )}
+                  <div className="flex items-center gap-2 ml-auto">
+                    <button
+                      onClick={() => setCopyTargetStrat(null)}
+                      className="px-4 py-2 rounded-lg border border-border text-xs font-medium hover:bg-card transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleExecuteCopy}
+                      disabled={actionLoadingId === copyTargetStrat.id}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors shadow-md shadow-primary/20"
+                    >
+                      {actionLoadingId === copyTargetStrat.id ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          <span>Deploying Policy...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <span>Confirm Copy Allocation</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </GlassPanel>
             </motion.div>

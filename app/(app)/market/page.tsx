@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
@@ -12,11 +12,14 @@ import {
   Filter,
   TrendingUp,
   TrendingDown,
+  Star,
 } from 'lucide-react';
 import { GlassPanel, PriceChange } from '@/components/shared/GlassPanel';
 import { RiskBadge } from '@/components/shared/SourceBadge';
 import { getAllAssets } from '@/lib/mock-data';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
+import { useSolanaWallet } from '@/lib/services/solana-wallet';
+import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/services/user-profile';
 import { cn } from '@/lib/utils';
 
 const MarketUniverse = dynamic(
@@ -37,6 +40,35 @@ type ViewMode = 'cards' | 'table' | '3d';
 export default function MarketDiscoveryPage() {
   const assets = getAllAssets();
   const { quotes, isPythConnected } = useDashboardLiveData();
+  const { address } = useSolanaWallet();
+  const userAddress = address || 'guest';
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    getUserProfile(userAddress).then(setProfile);
+  }, [userAddress]);
+
+  const watchlist = profile?.watchlist || [];
+
+  const handleToggleWatchlist = async (symbol: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!profile) return;
+    const isWatched = watchlist.includes(symbol);
+    const updatedWatchlist = isWatched
+      ? watchlist.filter((s) => s !== symbol)
+      : [...watchlist, symbol];
+
+    const updatedProfile: UserProfile = {
+      ...profile,
+      watchlist: updatedWatchlist,
+    };
+    setProfile(updatedProfile);
+    await saveUserProfile(updatedProfile);
+  };
+
   const [view, setView] = useState<ViewMode>('cards');
   const [search, setSearch] = useState('');
   const [sectorFilter, setSectorFilter] = useState('all');
@@ -59,12 +91,18 @@ export default function MarketDiscoveryPage() {
     return a;
   });
 
-  const sectors = ['all', ...Array.from(new Set(liveAssets.map((a) => a.tokenizedAsset.underlying.sector)))];
+  const rawSectors = Array.from(new Set(liveAssets.map((a) => a.tokenizedAsset.underlying.sector)));
+  const sectors = ['all', 'watchlist', ...rawSectors];
   const filtered = liveAssets.filter((a) => {
     const matchSearch =
       a.tokenizedAsset.symbol.toLowerCase().includes(search.toLowerCase()) ||
       a.tokenizedAsset.name.toLowerCase().includes(search.toLowerCase());
-    const matchSector = sectorFilter === 'all' || a.tokenizedAsset.underlying.sector === sectorFilter;
+    const matchSector =
+      sectorFilter === 'all'
+        ? true
+        : sectorFilter === 'watchlist'
+        ? watchlist.includes(a.tokenizedAsset.symbol)
+        : a.tokenizedAsset.underlying.sector === sectorFilter;
     return matchSearch && matchSector;
   });
 
@@ -102,7 +140,9 @@ export default function MarketDiscoveryPage() {
             className="rounded-lg border border-border bg-card/50 px-3 py-2 text-sm outline-none"
           >
             {sectors.map((s) => (
-              <option key={s} value={s}>{s === 'all' ? 'All Sectors' : s}</option>
+              <option key={s} value={s}>
+                {s === 'all' ? 'All Sectors' : s === 'watchlist' ? '⭐ Watchlist' : s}
+              </option>
             ))}
           </select>
           <div className="flex items-center rounded-lg border border-border overflow-hidden">
@@ -148,7 +188,22 @@ export default function MarketDiscoveryPage() {
                         <p className="text-xs text-muted-foreground">{asset.tokenizedAsset.name}</p>
                       </div>
                     </div>
-                    <RiskBadge level={asset.riskScore.level} />
+                    <div className="flex items-center gap-1.5">
+                      <RiskBadge level={asset.riskScore.level} />
+                      <button
+                        type="button"
+                        onClick={(e) => handleToggleWatchlist(asset.tokenizedAsset.symbol, e)}
+                        className={cn(
+                          "p-1.5 rounded-lg border transition-colors",
+                          watchlist.includes(asset.tokenizedAsset.symbol)
+                            ? "bg-amber-500/15 border-amber-500/40 text-amber-400"
+                            : "border-border/60 text-muted-foreground hover:text-amber-400 hover:border-amber-500/30"
+                        )}
+                        title={watchlist.includes(asset.tokenizedAsset.symbol) ? "Remove from watchlist" : "Add to watchlist"}
+                      >
+                        <Star className={cn("h-3.5 w-3.5", watchlist.includes(asset.tokenizedAsset.symbol) && "fill-amber-400")} />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-end justify-between mb-4">
@@ -203,6 +258,7 @@ export default function MarketDiscoveryPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border text-xs text-muted-foreground tracking-wider uppercase">
+                  <th className="w-10 px-3 py-3 text-center"></th>
                   <th className="text-left font-medium px-4 py-3">Asset</th>
                   <th className="text-right font-medium px-4 py-3">Price</th>
                   <th className="text-right font-medium px-4 py-3">24h Change</th>
@@ -215,7 +271,22 @@ export default function MarketDiscoveryPage() {
               </thead>
               <tbody className="text-sm">
                 {filtered.map((asset) => (
-                  <tr key={asset.tokenizedAsset.symbol} className="border-b border-border/50 hover:bg-card/50 transition-colors cursor-pointer">
+                  <tr key={asset.tokenizedAsset.symbol} className="border-b border-border/50 hover:bg-card/50 transition-colors">
+                    <td className="w-10 px-3 py-3 text-center">
+                      <button
+                        type="button"
+                        onClick={(e) => handleToggleWatchlist(asset.tokenizedAsset.symbol, e)}
+                        className={cn(
+                          "p-1 rounded-md transition-colors",
+                          watchlist.includes(asset.tokenizedAsset.symbol)
+                            ? "text-amber-400"
+                            : "text-muted-foreground/40 hover:text-amber-400"
+                        )}
+                        title={watchlist.includes(asset.tokenizedAsset.symbol) ? "Remove from watchlist" : "Add to watchlist"}
+                      >
+                        <Star className={cn("h-4 w-4", watchlist.includes(asset.tokenizedAsset.symbol) && "fill-amber-400")} />
+                      </button>
+                    </td>
                     <td className="px-4 py-3">
                       <Link href={`/market/${asset.tokenizedAsset.symbol}`} className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center text-xs font-bold">

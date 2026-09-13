@@ -273,6 +273,40 @@ export async function toggleRepostCommunityPost(
 }
 
 /**
+ * Delete a user post and its associated thread comments
+ */
+export async function deleteCommunityPost(
+  symbol: string,
+  postId: string,
+  userAddress: string = 'guest'
+): Promise<boolean> {
+  if (typeof window !== 'undefined') {
+    try {
+      const existing = await getCommunityPosts(symbol);
+      const filtered = existing.filter((p) => p.id !== postId);
+      localStorage.setItem(`${STORAGE_POSTS_KEY}${symbol}`, JSON.stringify(filtered));
+      localStorage.removeItem(`${STORAGE_COMMENTS_KEY}${postId}`);
+    } catch (e) {
+      console.warn('[Community] LocalStorage delete post error:', e);
+    }
+  }
+
+  if (isSupabaseConfigured()) {
+    const supabase = getSupabase();
+    if (supabase) {
+      try {
+        await supabase.from('community_comments').delete().eq('post_id', postId);
+        await supabase.from('community_posts').delete().eq('id', postId);
+      } catch (err) {
+        console.warn('[Community] Supabase delete post error:', err);
+      }
+    }
+  }
+
+  return true;
+}
+
+/**
  * Fetch comments for a specific post
  */
 export async function getPostComments(postId: string): Promise<CommunityComment[]> {
@@ -362,6 +396,47 @@ export async function toggleLikeComment(
   }
 
   return { likes, isLiked };
+}
+
+/**
+ * Delete a comment on a post
+ */
+export async function deletePostComment(
+  postId: string,
+  commentId: string,
+  symbol: string = 'NVDAx',
+  userAddress: string = 'guest'
+): Promise<boolean> {
+  if (typeof window !== 'undefined') {
+    try {
+      const existing = await getPostComments(postId);
+      const filtered = existing.filter((c) => c.id !== commentId);
+      localStorage.setItem(`${STORAGE_COMMENTS_KEY}${postId}`, JSON.stringify(filtered));
+
+      // Decrement reply count on post
+      const posts = await getCommunityPosts(symbol);
+      const post = posts.find((p) => p.id === postId);
+      if (post && post.engagement.replies > 0) {
+        post.engagement.replies = Math.max(0, post.engagement.replies - 1);
+        localStorage.setItem(`${STORAGE_POSTS_KEY}${symbol}`, JSON.stringify(posts));
+      }
+    } catch (e) {
+      console.warn('[Community] LocalStorage delete comment error:', e);
+    }
+  }
+
+  if (isSupabaseConfigured()) {
+    const supabase = getSupabase();
+    if (supabase) {
+      try {
+        await supabase.from('community_comments').delete().eq('id', commentId);
+      } catch (err) {
+        console.warn('[Community] Supabase delete comment error:', err);
+      }
+    }
+  }
+
+  return true;
 }
 
 /**

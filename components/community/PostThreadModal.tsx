@@ -14,6 +14,7 @@ import {
   Sparkles,
   Wallet,
   CornerDownRight,
+  Trash2,
 } from 'lucide-react';
 import { CommunityPost, CommunityComment } from '@/lib/services/community-service';
 import { SourceBadge } from '@/components/shared/SourceBadge';
@@ -143,6 +144,27 @@ export function PostThreadModal({
 
   const handleReplyToUser = (handle: string) => {
     setReplyText((prev) => (prev.includes(handle) ? prev : `${handle} ${prev}`));
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm('Are you sure you want to delete this reply?')) return;
+    try {
+      const res = await fetch('/api/community', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete_comment',
+          postId: post.id,
+          commentId,
+          authorAddress: currentUserAddress,
+        }),
+      });
+      if (res.ok) {
+        setComments((prev) => prev.filter((c) => c.id !== commentId));
+      }
+    } catch (err) {
+      console.error('Failed to delete reply:', err);
+    }
   };
 
   const handleCopyShare = () => {
@@ -431,6 +453,17 @@ export function PostThreadModal({
                       >
                         <CornerDownRight className="h-3.5 w-3.5" /> Reply
                       </button>
+
+                      {currentUserAddress && comment.authorAddress === currentUserAddress && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="flex items-center gap-1 hover:text-destructive transition-colors text-[11px] text-muted-foreground ml-auto"
+                          title="Delete reply"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 );

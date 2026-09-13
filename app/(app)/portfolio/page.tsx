@@ -17,12 +17,15 @@ import {
   RefreshCw,
   Layers,
   ExternalLink,
+  Building2,
 } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { RiskBadge } from '@/components/shared/SourceBadge';
 import { AnimatedNumber } from '@/components/shared/AnimatedNumber';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
+import { BackpackMintRedeemModal } from '@/components/portfolio/BackpackMintRedeemModal';
+import { PortfolioStressSimulator } from '@/components/portfolio/PortfolioStressSimulator';
 import type { PaperPortfolioSummary, PaperTradeRecord } from '@/lib/services/paper-trading-service';
 import { cn } from '@/lib/utils';
 
@@ -62,8 +65,37 @@ export default function PortfolioPage() {
     fetchPaperPortfolio();
   }, [userAddress]);
 
+  const [isBackpackModalOpen, setIsBackpackModalOpen] = useState(false);
+
   // Aggregate active open positions
   const openPaperPositions = (paperPortfolio?.trades || []).filter((t: PaperTradeRecord) => t.status === 'filled');
+
+  const simulatorHoldings = useMemo(() => {
+    if (viewMode === 'paper') {
+      return openPaperPositions.map((pos) => {
+        const livePrice = quotes[pos.symbol.replace(/x$/, '')]?.price || pos.executionPrice;
+        return {
+          symbol: pos.symbol,
+          quantity: pos.quantity,
+          currentPrice: livePrice,
+          valueUsd: pos.quantity * livePrice,
+        };
+      });
+    } else {
+      if (!connected || totalOnChainValue <= 0) return [];
+      return [
+        {
+          symbol: 'SOL',
+          quantity: balanceSol,
+          currentPrice: liveSolPrice,
+          valueUsd: solValueUsd,
+        },
+      ];
+    }
+  }, [viewMode, openPaperPositions, quotes, connected, totalOnChainValue, balanceSol, liveSolPrice, solValueUsd]);
+
+  const simulatorCash = viewMode === 'paper' ? (paperPortfolio?.cashBalance || 100000) : balanceUsdc;
+  const simulatorTotal = viewMode === 'paper' ? (paperPortfolio?.totalPortfolioValue || 100000) : totalOnChainValue;
 
   // Dynamically compute real asset concentration from actual user holdings
   const totalPortfolioVal = viewMode === 'paper' ? (paperPortfolio?.totalPortfolioValue || 100000) : (totalOnChainValue || 1);
@@ -122,33 +154,44 @@ export default function PortfolioPage() {
           </p>
         </div>
 
-        {/* View Mode Segmented Switcher */}
-        <div className="flex items-center gap-2 bg-card/60 border border-border p-1 rounded-xl self-start sm:self-auto">
+        {/* Controls: Backpack Primary Gateway + Mode Switcher */}
+        <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
           <button
-            onClick={() => setViewMode('paper')}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
-              viewMode === 'paper'
-                ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/30'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
+            type="button"
+            onClick={() => setIsBackpackModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 text-xs font-semibold transition-all active:scale-95 shadow-sm"
           >
-            <FlaskConical className="h-3.5 w-3.5" />
-            <span>Paper Portfolio ($100k)</span>
+            <Building2 className="h-3.5 w-3.5" />
+            <span>Backpack Mint &amp; Redeem</span>
           </button>
 
-          <button
-            onClick={() => setViewMode('vault')}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
-              viewMode === 'vault'
-                ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/30'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Wallet className="h-3.5 w-3.5" />
-            <span>On-Chain Vault</span>
-          </button>
+          <div className="flex items-center gap-1 bg-card/60 border border-border p-1 rounded-xl">
+            <button
+              onClick={() => setViewMode('paper')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
+                viewMode === 'paper'
+                  ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/30'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <FlaskConical className="h-3.5 w-3.5" />
+              <span>Paper Portfolio ($100k)</span>
+            </button>
+
+            <button
+              onClick={() => setViewMode('vault')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
+                viewMode === 'vault'
+                  ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/30'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Wallet className="h-3.5 w-3.5" />
+              <span>On-Chain Vault</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -470,6 +513,13 @@ export default function PortfolioPage() {
         </GlassPanel>
       </div>
 
+      {/* PRD §18 Position Shock Scenario Simulator */}
+      <PortfolioStressSimulator
+        cashBalance={simulatorCash}
+        holdings={simulatorHoldings}
+        totalValue={simulatorTotal}
+      />
+
       {/* Navigation Quick Actions */}
       <div className="grid md:grid-cols-3 gap-4">
         <Link
@@ -517,6 +567,13 @@ export default function PortfolioPage() {
           </div>
         </Link>
       </div>
+
+      {/* Backpack Primary Mint & Redeem Gateway Modal */}
+      <BackpackMintRedeemModal
+        isOpen={isBackpackModalOpen}
+        onClose={() => setIsBackpackModalOpen(false)}
+        userAddress={userAddress}
+      />
     </div>
   );
 }

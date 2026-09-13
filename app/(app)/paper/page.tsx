@@ -29,12 +29,39 @@ export default function PaperTradingPage() {
   const [portfolio, setPortfolio] = useState<PaperPortfolioSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   // New trade state
   const [tradeSymbol, setTradeSymbol] = useState('NVDAx');
   const [tradeSide, setTradeSide] = useState<'buy' | 'sell'>('buy');
   const [tradeAmount, setTradeAmount] = useState(2500);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleResetPortfolio = async () => {
+    setIsResetting(true);
+    try {
+      const res = await fetch('/api/paper', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reset',
+          userAddress: userAddr,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.portfolio) {
+          setPortfolio(data.portfolio);
+        }
+        setIsResetConfirmOpen(false);
+      }
+    } catch (err) {
+      console.error('Failed to reset paper portfolio:', err);
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const fetchPortfolio = async () => {
     try {
@@ -147,6 +174,13 @@ export default function PaperTradingPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsResetConfirmOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/30 font-semibold text-xs transition-all active:scale-95"
+            title="Reset Paper Account to $100,000"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> Reset Balance
+          </button>
           <button
             onClick={() => setIsTradeModalOpen(true)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shadow-md transition-all active:scale-95"
@@ -423,6 +457,55 @@ export default function PaperTradingPage() {
                   {isSubmitting ? 'Executing against Pyth Oracle...' : `Simulate ${tradeSide.toUpperCase()} Order`}
                 </button>
               </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Reset Confirmation Modal */}
+        {isResetConfirmOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md rounded-2xl hairline-card p-6 bg-card shadow-2xl border border-destructive/40 space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-destructive">
+                  <RotateCcw className="h-5 w-5" />
+                  <h3 className="font-semibold text-lg text-foreground">Reset Paper Portfolio?</h3>
+                </div>
+                <button
+                  onClick={() => setIsResetConfirmOpen(false)}
+                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                This will permanently delete all your simulated trade history and restore your virtual cash balance to <span className="text-foreground font-semibold font-mono">$100,000.00</span>. This action cannot be undone.
+              </p>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsResetConfirmOpen(false)}
+                  disabled={isResetting}
+                  className="px-4 py-2 rounded-xl border border-border text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetPortfolio}
+                  disabled={isResetting}
+                  className="px-4 py-2 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-semibold shadow-md transition-all disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  <RotateCcw className={cn("h-3.5 w-3.5", isResetting && "animate-spin")} />
+                  {isResetting ? 'Resetting...' : 'Yes, Reset Account'}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

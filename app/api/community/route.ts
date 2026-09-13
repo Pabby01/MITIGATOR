@@ -11,6 +11,8 @@ import {
   updateUserProfile,
   toggleFollowUser,
   computeCommunitySentiment,
+  deleteCommunityPost,
+  deletePostComment,
 } from '@/lib/services/community-service';
 import { getLivePythPrice } from '@/lib/services/pyth-service';
 
@@ -135,6 +137,25 @@ export async function POST(req: NextRequest) {
       }
       const result = await toggleFollowUser(targetHandle, userAddress || 'guest');
       return NextResponse.json({ success: true, ...result });
+    }
+
+    // 7. Delete community post
+    if (action === 'delete_post') {
+      if (!symbol || !postId) {
+        return NextResponse.json({ error: 'Missing symbol or postId' }, { status: 400 });
+      }
+      const success = await deleteCommunityPost(symbol, postId, userAddress || 'guest');
+      return NextResponse.json({ success });
+    }
+
+    // 8. Delete post comment
+    if (action === 'delete_comment') {
+      const { commentId } = body;
+      if (!postId || !commentId) {
+        return NextResponse.json({ error: 'Missing postId or commentId' }, { status: 400 });
+      }
+      const success = await deletePostComment(postId, commentId, symbol || 'NVDAx', userAddress || 'guest');
+      return NextResponse.json({ success });
     }
 
     // Default: Create new community post

@@ -3,6 +3,7 @@ import {
   getPaperPortfolio,
   executePaperTrade,
   closePaperPosition,
+  resetPaperPortfolio,
 } from '@/lib/services/paper-trading-service';
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,11 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { action = 'execute', userAddress = 'guest', tradeId, symbol, side, amountUsd, venue } = body;
+
+    if (action === 'reset') {
+      const portfolio = await resetPaperPortfolio(userAddress);
+      return NextResponse.json({ success: true, portfolio });
+    }
 
     if (action === 'close') {
       if (!tradeId) {
