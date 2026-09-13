@@ -101,6 +101,15 @@ export function useDashboardLiveData() {
   // Load SEC Filings
   const loadSecFilings = useCallback(async () => {
     try {
+      const res = await fetch('/api/filings?symbol=NVDAx');
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.filings && data.filings.length > 0) {
+          setFilings(data.filings.slice(0, 6));
+          return;
+        }
+      }
+      // Fallback
       const nvdaFilings = await getLiveSECFilings('NVDAx');
       if (nvdaFilings.length > 0) {
         setFilings(nvdaFilings.slice(0, 6));

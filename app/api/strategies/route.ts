@@ -8,6 +8,8 @@ import {
   createCustomStrategy,
 } from '@/lib/services/strategies-service';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

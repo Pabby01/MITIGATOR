@@ -19,12 +19,15 @@ import {
   MessageSquare,
   Clock,
   ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 import { TradingViewChart } from '@/components/market/TradingViewChart';
 import { GlassPanel, PriceChange } from '@/components/shared/GlassPanel';
 import { ScoreRing } from '@/components/shared/ScoreRing';
 import { SourceBadge, RiskBadge, FreshnessBadge } from '@/components/shared/SourceBadge';
 import { getAsset, getHistoricalBars, getNews, getFilings, getSocialPosts, getTimelineEvents, getAIInsight } from '@/lib/mock-data';
+import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
+import type { SECFiling } from '@/lib/services/sec-edgar-service';
 import { cn } from '@/lib/utils';
 
 type Tab = 'overview' | 'news' | 'filings' | 'social' | 'timeline' | 'ai';
@@ -38,14 +41,41 @@ export default function StockDetailPage() {
   const [timeframe, setTimeframe] = useState<Timeframe>('1M');
   const [dataset, setDataset] = useState<'equity' | 'token'>('equity');
 
+  const { quotes, isPythConnected } = useDashboardLiveData();
+  const cleanSym = symbol.replace(/x$/, '');
+  const liveQuote = quotes[cleanSym] || quotes[symbol];
+
   const news = useMemo(() => getNews(symbol), [symbol]);
-  const filings = useMemo(() => getFilings(symbol), [symbol]);
+  const defaultFilings = useMemo(() => getFilings(symbol), [symbol]);
   const social = useMemo(() => getSocialPosts(symbol), [symbol]);
   const timeline = useMemo(() => getTimelineEvents(symbol), [symbol]);
   const defaultAiInsight = useMemo(() => getAIInsight(symbol, 2000), [symbol]);
 
+  const [liveFilings, setLiveFilings] = useState<SECFiling[]>([]);
+  const [isFilingsLoading, setIsFilingsLoading] = useState(true);
   const [liveAiInsight, setLiveAiInsight] = useState<any>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setIsFilingsLoading(true);
+    fetch(`/api/filings?symbol=${encodeURIComponent(symbol)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && data?.filings && data.filings.length > 0) {
+          setLiveFilings(data.filings);
+        }
+      })
+      .catch((err) => console.warn('[StockDetailPage] filings load error:', err))
+      .finally(() => {
+        if (active) setIsFilingsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [symbol]);
+
+  const activeFilings = liveFilings.length > 0 ? liveFilings : defaultFilings;
 
   useEffect(() => {
     let active = true;
@@ -104,9 +134,21 @@ export default function StockDetailPage() {
               <p className="text-sm text-muted-foreground">{asset.tokenizedAsset.name}</p>
             </div>
           </div>
-          <div className="mt-3 flex items-center gap-4">
-            <span className="text-3xl font-bold tabular-nums">${asset.quote.price.toFixed(2)}</span>
-            <PriceChange change={asset.quote.change24h} pct={asset.quote.changePct24h} className="text-lg" />
+          <div className="mt-3 flex items-center gap-4 flex-wrap">
+            <span className="text-3xl font-bold tabular-nums">
+              ${(liveQuote?.price ?? asset.quote.price).toFixed(2)}
+            </span>
+            <PriceChange
+              change={liveQuote?.change24h ?? asset.quote.change24h}
+              pct={liveQuote?.changePct24h ?? asset.quote.changePct24h}
+              className="text-lg"
+            />
+            {liveQuote?.isLive && (
+              <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Pyth Streaming
+              </span>
+            )}
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
             <span className="flex items-center gap-1 text-emerald-400 font-mono">
@@ -270,14 +312,27 @@ export default function StockDetailPage() {
                   Full AI Analysis
                   <ChevronRight className="h-3 w-3" />
                 </button>
-                <div className="grid grid-cols-2 gap-2">
-                  <Link href="/risk" className="flex items-center justify-center gap-1.5 rounded-lg bg-card/50 py-2 text-xs hover:bg-card transition-colors">
-                    <ShieldCheck className="h-3.5 w-3.5 text-amber-400" />
-                    Risk Center
+                <div className="grid grid-cols-3 gap-2">
+                  <Link
+                    href={`/paper?symbol=${symbol}`}
+                    className="flex items-center justify-center gap-1.5 rounded-lg bg-card/50 py-2 text-xs hover:bg-card hover:border-emerald-500/30 border border-border/60 transition-colors"
+                  >
+                    <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
+                    Paper Trade
                   </Link>
-                  <Link href="/execution" className="flex items-center justify-center gap-1.5 rounded-lg bg-card/50 py-2 text-xs hover:bg-card transition-colors">
+                  <Link
+                    href={`/execution?symbol=${symbol}`}
+                    className="flex items-center justify-center gap-1.5 rounded-lg bg-card/50 py-2 text-xs hover:bg-card hover:border-cyan-500/30 border border-border/60 transition-colors"
+                  >
                     <Activity className="h-3.5 w-3.5 text-cyan-400" />
-                    Execution
+                    Live Route
+                  </Link>
+                  <Link
+                    href="/risk"
+                    className="flex items-center justify-center gap-1.5 rounded-lg bg-card/50 py-2 text-xs hover:bg-card hover:border-amber-500/30 border border-border/60 transition-colors"
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5 text-amber-400" />
+                    Risk Matrix
                   </Link>
                 </div>
               </div>
@@ -324,26 +379,85 @@ export default function StockDetailPage() {
       {/* Filings tab */}
       {tab === 'filings' && (
         <div className="space-y-3">
-          {filings.map((filing, i) => (
-            <motion.div key={filing.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-              <GlassPanel hover className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2">
-                    <FileText className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold tracking-wider bg-card px-2 py-0.5 rounded">{filing.type}</span>
-                      <SourceBadge tier={filing.sourceTier} />
-                    </div>
-                    <p className="mt-1 text-sm font-medium">{filing.title}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(filing.filedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                  </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </GlassPanel>
-            </motion.div>
-          ))}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg bg-card/60 border border-border">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-mono font-medium text-emerald-400">
+                Authoritative SEC EDGAR Regulatory Disclosures (Tier 1 Primary)
+              </span>
+            </div>
+            <a
+              href="https://www.sec.gov/edgar/searchedgar/companysearch"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-mono transition-colors"
+            >
+              Verify on SEC.gov <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+
+          {isFilingsLoading ? (
+            <div className="p-8 text-center text-xs text-muted-foreground font-mono flex items-center justify-center gap-2">
+              <span className="h-3 w-3 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              Streaming live SEC EDGAR submissions...
+            </div>
+          ) : activeFilings.length === 0 ? (
+            <div className="p-8 text-center text-xs text-muted-foreground font-mono">
+              No recent SEC filings retrieved for {symbol}.
+            </div>
+          ) : (
+            activeFilings.map((filing: any, i) => {
+              const formType = filing.form || filing.type || 'FILING';
+              const docTitle = filing.description || filing.title || `${formType} Disclosure`;
+              const filingDate = filing.filingDate || filing.filedAt;
+              const accessionNum = filing.accessionNumber;
+              const targetUrl = filing.url || `https://www.sec.gov/edgar/searchedgar/companysearch`;
+
+              return (
+                <motion.div
+                  key={accessionNum || filing.id || i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <a
+                    href={targetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block group"
+                  >
+                    <GlassPanel hover className="p-4 flex items-center justify-between group-hover:border-primary/40 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="rounded-lg bg-primary/10 p-2 group-hover:bg-primary/20 transition-colors">
+                          <FileText className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-bold tracking-wider bg-card px-2 py-0.5 rounded border border-border">
+                              {formType}
+                            </span>
+                            <SourceBadge tier="PRIMARY" />
+                            {accessionNum && (
+                              <span className="text-[10px] font-mono text-muted-foreground">
+                                Acc: {accessionNum}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-1 text-sm font-medium group-hover:text-primary transition-colors">
+                            {docTitle}
+                          </p>
+                          <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                            Filed: {filingDate ? new Date(filingDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Recent'}
+                          </p>
+                        </div>
+                      </div>
+                      <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+                    </GlassPanel>
+                  </a>
+                </motion.div>
+              );
+            })
+          )}
         </div>
       )}
 

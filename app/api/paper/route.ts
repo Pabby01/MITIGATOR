@@ -4,6 +4,7 @@ import {
   executePaperTrade,
   closePaperPosition,
 } from '@/lib/services/paper-trading-service';
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
