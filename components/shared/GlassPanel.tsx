@@ -5,14 +5,17 @@ export function GlassPanel({
   className,
   hover = false,
   glow = false,
+  onClick,
 }: {
   children: React.ReactNode;
   className?: string;
   hover?: boolean;
   glow?: boolean;
+  onClick?: (e?: any) => void;
 }) {
   return (
     <div
+      onClick={onClick}
       className={cn(
         'glass-panel rounded-xl',
         hover && 'glass-panel-hover',

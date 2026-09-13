@@ -55,6 +55,24 @@ export default function StockDetailPage() {
   const [isFilingsLoading, setIsFilingsLoading] = useState(true);
   const [liveAiInsight, setLiveAiInsight] = useState<any>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [liveSocialPosts, setLiveSocialPosts] = useState<any[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/community?symbol=${encodeURIComponent(symbol)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && data?.posts && data.posts.length > 0) {
+          setLiveSocialPosts(data.posts);
+        }
+      })
+      .catch((err) => console.warn('[StockDetailPage] social load error:', err));
+    return () => {
+      active = false;
+    };
+  }, [symbol]);
+
+  const activeSocial = liveSocialPosts.length > 0 ? liveSocialPosts : social;
 
   useEffect(() => {
     let active = true;
@@ -468,7 +486,7 @@ export default function StockDetailPage() {
             <ShieldCheck className="h-4 w-4 text-amber-400 flex-shrink-0" />
             <p className="text-xs text-muted-foreground">Community posts are social signals, not verified financial facts. Always check the source tier.</p>
           </div>
-          {social.map((post, i) => (
+          {activeSocial.map((post, i) => (
             <motion.div key={post.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
               <GlassPanel hover className="p-4">
                 <div className="flex items-start justify-between mb-3">

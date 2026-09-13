@@ -2,6 +2,7 @@ import { getLiveSECFilings } from './sec-edgar-service';
 import { getLivePythPrice } from './pyth-service';
 import { getLiveJupiterQuote } from './jupiter-service';
 import { computeMitigatorRiskScore } from './risk-engine';
+import { getCommunityPosts, computeCommunitySentiment } from './community-service';
 
 export interface AIAgent {
   id: string;
@@ -212,17 +213,35 @@ export async function runAgentLive(agentId: string, symbol: string = 'NVDAx'): P
     }
 
     case 'social': {
+      const [posts, pyth] = await Promise.all([
+        getCommunityPosts(symbol).catch(() => []),
+        getLivePythPrice(symbol).catch(() => null),
+      ]);
+      const sentiment = computeCommunitySentiment(posts, symbol, {
+        price: pyth?.price,
+        changePct: pyth?.changePct24h,
+        volume: pyth?.volume24h,
+      });
+
       return {
         agentId,
         timestamp,
-        status: 'success',
-        confidence: 0.79,
+        status: sentiment.divergenceLevel === 'HIGH' ? 'warning' : 'success',
+        confidence: Math.round((sentiment.sourceIntegrityScore / 100) * 100) / 100,
         findings: [
-          `Aggregated social sentiment across MITIGATOR Community and on-chain trading signals for ${symbol}`,
-          `Community consensus: 76% Bullish, 18% Neutral, 6% Bearish`,
-          `Discussion velocity: High retail interest in 24/7 tokenized market access`,
+          `Aggregated ${posts.length} live research submissions across MITIGATOR Community for ${symbol}`,
+          `Live Consensus: ${sentiment.bullishPct}% Bullish, ${sentiment.neutralPct}% Neutral, ${sentiment.bearishPct}% Bearish`,
+          sentiment.disagreement,
+          `Top Mined Catalysts: ${sentiment.narratives}`,
         ],
-        telemetry: { consensus: 'Bullish (76%)', sampleSize: 142, narrativeDrift: 'Nominal' },
+        telemetry: {
+          consensus: `${sentiment.bullishPct}% Bullish (${sentiment.divergenceType})`,
+          sampleSize: posts.length,
+          sourceIntegrity: `${sentiment.sourceIntegrityScore}%`,
+          velocity: sentiment.sentimentVelocity,
+          livePrice: pyth?.price ? `$${pyth.price}` : 'Par',
+          change24h: pyth?.changePct24h !== undefined ? `${pyth.changePct24h}%` : '0%',
+        },
       };
     }
 

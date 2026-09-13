@@ -83,6 +83,18 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
+  // Helper to extract clean base58 string from any Solana PublicKey object
+  const getPubkeyString = (obj: any): string | null => {
+    if (!obj) return null;
+    if (typeof obj === 'string') return obj;
+    if (typeof obj.toBase58 === 'function') return obj.toBase58();
+    if (typeof obj.toString === 'function') {
+      const s = obj.toString();
+      if (s && s !== '[object Object]') return s;
+    }
+    return null;
+  };
+
   // Detect installed extensions safely in the browser
   const isInstalled = useCallback((type: WalletProviderType): boolean => {
     if (typeof window === 'undefined') return false;
@@ -92,10 +104,10 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
       return !!(win.phantom?.solana?.isPhantom || win.solana?.isPhantom);
     }
     if (type === 'solflare') {
-      return !!win.solflare?.isSolflare;
+      return !!(win.solflare?.isSolflare || win.solflare || win.solana?.isSolflare);
     }
     if (type === 'backpack') {
-      return !!win.backpack?.isBackpack;
+      return !!(win.backpack?.isBackpack || win.backpack);
     }
     return false;
   }, []);
@@ -105,7 +117,6 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
     try {
       const sol = await fetchLiveSolBalance(pubkey);
       setBalanceSol(sol);
-      // Query token accounts or default USDC
       setBalanceUsdc(0);
     } catch {
       setBalanceSol(0);
@@ -118,6 +129,34 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
       await updateBalance(address);
     }
   }, [address, updateBalance]);
+
+  // Try silent reconnect on page mount if previously connected
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const savedType = localStorage.getItem('mitigator_connected_wallet_type') as WalletProviderType | null;
+      if (savedType) {
+        const win = window as any;
+        const prov = savedType === 'phantom'
+          ? (win.phantom?.solana || win.solana)
+          : savedType === 'solflare'
+          ? (win.solflare || win.solana)
+          : win.backpack;
+
+        if (prov && (prov.isConnected || prov.publicKey)) {
+          const pk = getPubkeyString(prov.publicKey);
+          if (pk) {
+            setConnected(true);
+            setAddress(pk);
+            setWalletType(savedType);
+            updateBalance(pk);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[SolanaWallet] Auto-connect check failed:', e);
+    }
+  }, [updateBalance]);
 
   const connect = useCallback(async (type: WalletProviderType): Promise<boolean> => {
     setConnecting(true);
@@ -135,8 +174,8 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
           throw new Error('Phantom wallet not detected. Please install Phantom extension from https://phantom.app/');
         }
       } else if (type === 'solflare') {
-        provider = win.solflare;
-        if (!provider || !provider.isSolflare) {
+        provider = win.solflare || (win.solana?.isSolflare ? win.solana : null);
+        if (!provider) {
           window.open('https://solflare.com/', '_blank');
           throw new Error('Solflare wallet not detected. Please install Solflare extension from https://solflare.com/');
         }
@@ -150,7 +189,13 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
 
       // Request real wallet connection
       const response = await provider.connect();
-      const pubkey = (response?.publicKey || provider.publicKey)?.toString();
+      let pubkey = getPubkeyString(response?.publicKey) || getPubkeyString(provider.publicKey);
+
+      // Handle async state update tick
+      if (!pubkey && (provider.isConnected || provider.publicKey)) {
+        await new Promise((r) => setTimeout(r, 80));
+        pubkey = getPubkeyString(provider.publicKey);
+      }
 
       if (!pubkey) {
         throw new Error('Wallet connection rejected or public key not found');
@@ -159,6 +204,10 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
       setConnected(true);
       setAddress(pubkey);
       setWalletType(type);
+      try {
+        localStorage.setItem('mitigator_connected_wallet_type', type);
+      } catch {}
+
       await updateBalance(pubkey);
       setConnecting(false);
 
@@ -168,7 +217,7 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
       });
       provider.on?.('accountChanged', (newPubkey: any) => {
         if (newPubkey) {
-          const pk = newPubkey.toString();
+          const pk = getPubkeyString(newPubkey) || newPubkey.toString();
           setAddress(pk);
           updateBalance(pk);
         } else {
@@ -192,6 +241,7 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
         if (walletType === 'phantom') (win.phantom?.solana || win.solana)?.disconnect?.();
         if (walletType === 'solflare') win.solflare?.disconnect?.();
         if (walletType === 'backpack') win.backpack?.disconnect?.();
+        localStorage.removeItem('mitigator_connected_wallet_type');
       } catch (err) {
         console.warn('Disconnect error:', err);
       }

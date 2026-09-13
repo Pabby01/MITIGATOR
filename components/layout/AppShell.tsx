@@ -31,6 +31,7 @@ import {
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { BrandLogo } from '@/components/shared/BrandLogo';
+import { PhantomLogo, SolflareLogo, BackpackLogo } from '@/components/shared/WalletIcons';
 import { MobileBottomBar } from '@/components/layout/MobileBottomBar';
 import { useSolanaWallet, WalletProviderType } from '@/lib/services/solana-wallet';
 
@@ -420,21 +421,21 @@ function WalletModal({ onClose }: { onClose: () => void }) {
               {
                 id: 'phantom' as const,
                 name: 'Phantom',
-                icon: '🟣',
+                logo: <PhantomLogo className="h-9 w-9 rounded-xl shadow-xs flex-shrink-0" />,
                 installed: isInstalled('phantom'),
                 subtext: isInstalled('phantom') ? 'Browser extension detected' : 'Click to install Phantom',
               },
               {
                 id: 'solflare' as const,
                 name: 'Solflare',
-                icon: '🟠',
+                logo: <SolflareLogo className="h-9 w-9 rounded-xl shadow-xs flex-shrink-0" />,
                 installed: isInstalled('solflare'),
                 subtext: isInstalled('solflare') ? 'Browser extension detected' : 'Click to install Solflare',
               },
               {
                 id: 'backpack' as const,
                 name: 'Backpack',
-                icon: '🔴',
+                logo: <BackpackLogo className="h-9 w-9 rounded-xl shadow-xs flex-shrink-0" />,
                 installed: isInstalled('backpack'),
                 subtext: isInstalled('backpack') ? 'Browser extension detected' : 'Click to install Backpack',
               },
@@ -443,19 +444,21 @@ function WalletModal({ onClose }: { onClose: () => void }) {
                 key={w.id}
                 disabled={connecting}
                 onClick={() => handleSelectWallet(w.id)}
-                className="w-full flex items-center justify-between p-3.5 rounded-xl border border-border/70 hover:border-primary/50 hover:bg-card/70 transition-all group text-left"
+                className="w-full flex items-center justify-between p-3 rounded-xl border border-border/70 hover:border-primary/50 hover:bg-card/70 transition-all group text-left cursor-pointer"
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">{w.icon}</span>
+                <div className="flex items-center gap-3.5">
+                  {w.logo}
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold">{w.name}</p>
+                      <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                        {w.name}
+                      </p>
                       {w.installed ? (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-medium">
                           Detected
                         </span>
                       ) : (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted border border-border text-muted-foreground font-medium">
                           Not Detected
                         </span>
                       )}
@@ -465,7 +468,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
                 </div>
                 <div className="flex items-center gap-1.5">
                   {connecting && selectedType === w.id ? (
-                    <span className="text-xs text-primary animate-pulse">Connecting...</span>
+                    <span className="text-xs text-primary animate-pulse font-mono font-medium">Connecting...</span>
                   ) : (
                     <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   )}
