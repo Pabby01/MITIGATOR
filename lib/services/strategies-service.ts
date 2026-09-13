@@ -31,74 +31,11 @@ export interface StrategySubscription {
   createdAt: string;
 }
 
-const SEED_STRATEGIES: MarketplaceStrategy[] = [
-  {
-    id: 'strat-1',
-    name: 'AI Momentum Alpha',
-    creator: '0xQuant...4f2a',
-    description: 'Momentum-based strategy targeting high-conviction tokenized stocks with MITIGATOR Score above 75.',
-    riskLevel: 'moderate',
-    roi: 34.2,
-    drawdown: 8.4,
-    sharpe: 1.84,
-    winRate: 68,
-    volatility: 22,
-    tradeFrequency: 4.2,
-    holdingPeriod: '2-7 days',
-    concentration: 35,
-    methodology: 'Score-weighted momentum with volatility scaling and event blackout periods.',
-    followers: 1284,
-    copiers: 342,
-    verified: true,
-    targetAssets: ['NVDAx', 'MSFTx', 'AAPLx'],
-  },
-  {
-    id: 'strat-2',
-    name: 'Dividend Harvest Pro',
-    creator: '0xIncome...8c1d',
-    description: 'Systematic dividend capture with DCA re-entry. Focus on dividend-paying tokenized stocks.',
-    riskLevel: 'low',
-    roi: 18.6,
-    drawdown: 4.2,
-    sharpe: 1.52,
-    winRate: 82,
-    volatility: 12,
-    tradeFrequency: 1.8,
-    holdingPeriod: '15-45 days',
-    concentration: 22,
-    methodology: 'Ex-dividend date tracking with position sizing based on yield and MITIGATOR Score.',
-    followers: 876,
-    copiers: 198,
-    verified: true,
-    targetAssets: ['AAPLx', 'MSFTx', 'SPYx'],
-  },
-  {
-    id: 'strat-3',
-    name: 'Mean Reversion Bot',
-    creator: '0xRevert...2b9e',
-    description: 'Statistical mean reversion on RSI extremes with tight risk stops.',
-    riskLevel: 'elevated',
-    roi: 27.8,
-    drawdown: 11.2,
-    sharpe: 1.42,
-    winRate: 61,
-    volatility: 28,
-    tradeFrequency: 8.5,
-    holdingPeriod: '1-3 days',
-    concentration: 28,
-    methodology: 'Bollinger Band + RSI reversion with ATR-based stops and maximum 2% risk per trade.',
-    followers: 542,
-    copiers: 127,
-    verified: false,
-    targetAssets: ['TSLAx', 'NVDAx'],
-  },
-];
-
 const STORAGE_KEY_SUBSCRIPTIONS = 'mitigator_strategy_subs_';
 const STORAGE_KEY_CUSTOM_STRATEGIES = 'mitigator_custom_strategies';
 
 /**
- * Fetch marketplace strategies
+ * Fetch marketplace strategies (from custom user models or database)
  */
 export async function getMarketplaceStrategies(): Promise<MarketplaceStrategy[]> {
   let customStrats: MarketplaceStrategy[] = [];
@@ -124,7 +61,7 @@ export async function getMarketplaceStrategies(): Promise<MarketplaceStrategy[]>
       }
     }
   }
-  return [...customStrats, ...SEED_STRATEGIES];
+  return customStrats;
 }
 
 /**
@@ -136,8 +73,8 @@ export async function createCustomStrategy(
   const newStrategy: MarketplaceStrategy = {
     ...strategy,
     id: `strat-custom-${Date.now()}`,
-    followers: 1,
-    copiers: 1,
+    followers: 0,
+    copiers: 0,
     verified: false,
   };
 
@@ -256,7 +193,10 @@ export async function deployPaperStrategy(
   virtualAmountUsd: number = 2500
 ): Promise<{ success: boolean; message: string }> {
   const strategies = await getMarketplaceStrategies();
-  const strat = strategies.find((s) => s.id === strategyId) || SEED_STRATEGIES[0];
+  const strat = strategies.find((s) => s.id === strategyId);
+  if (!strat) {
+    return { success: false, message: 'Selected strategy not found.' };
+  }
 
   const targetAsset = strat.targetAssets[0] || 'NVDAx';
 

@@ -22,6 +22,7 @@ import { GlassPanel } from '@/components/shared/GlassPanel';
 import { getAllAssets } from '@/lib/mock-data';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
+import { PYTH_FEED_IDS } from '@/lib/services/pyth-service';
 import { cn } from '@/lib/utils';
 
 export default function ExecutionPage() {
@@ -56,7 +57,7 @@ function ExecutionRouterContent() {
   const [executedTrade, setExecutedTrade] = useState<any>(null);
 
   const cleanSymbol = symbol.replace(/x$/, '');
-  const basePrice = liveQuotes[cleanSymbol]?.price || 184.22;
+  const basePrice = liveQuotes[cleanSymbol]?.price || PYTH_FEED_IDS[symbol]?.fallbackPrice || 100;
 
   // Build live multi-venue execution quotes grounded in real Pyth base price
   const quotes = useMemo(() => {

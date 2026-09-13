@@ -117,7 +117,25 @@ export default function PaperTradingPage() {
   const balance = portfolio?.cashBalance || 100000;
   const totalVal = portfolio?.totalPortfolioValue || 100000;
   const totalPnl = (portfolio?.totalUnrealizedPnl || 0) + (portfolio?.totalRealizedPnl || 0);
-  const winRate = portfolio?.winRate || 75;
+  const totalTradesCount = portfolio?.totalTradesCount ?? trades.length;
+  const winRate = totalTradesCount > 0 ? (portfolio?.winRate ?? 0) : 0;
+
+  // Real dynamic metrics computed from actual trades
+  const avgSlippage = trades.length > 0
+    ? (trades.reduce((sum, t) => sum + (t.slippagePct || 0), 0) / trades.length).toFixed(2)
+    : '0.00';
+
+  const totalFees = trades.length > 0
+    ? (trades.length * 0.05).toFixed(2)
+    : '0.00';
+
+  const bestTrade = trades.length > 0
+    ? [...trades].sort((a, b) => (b.unrealizedPnlPct || 0) - (a.unrealizedPnlPct || 0))[0]
+    : null;
+
+  const bestPerformerDisplay = bestTrade
+    ? `${bestTrade.symbol} (${bestTrade.unrealizedPnlPct >= 0 ? '+' : ''}${bestTrade.unrealizedPnlPct.toFixed(2)}%)`
+    : 'None (0 Trades)';
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
@@ -160,8 +178,10 @@ export default function PaperTradingPage() {
 
         <GlassPanel hover className="p-4">
           <p className="text-xs font-medium text-muted-foreground">Simulated Win Rate</p>
-          <p className="mt-1 text-2xl font-bold text-emerald-400 tabular-nums">{winRate}%</p>
-          <p className="mt-1 text-xs text-muted-foreground font-mono">{trades.length} Total Executions</p>
+          <p className="mt-1 text-2xl font-bold text-emerald-400 tabular-nums">
+            {totalTradesCount > 0 ? `${winRate}%` : '0%'}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground font-mono">{totalTradesCount} Total Executions</p>
         </GlassPanel>
 
         <GlassPanel hover className="p-4">
@@ -267,23 +287,30 @@ export default function PaperTradingPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div>
             <p className="text-xs text-muted-foreground">Total Executions</p>
-            <p className="text-xl font-bold tabular-nums">{portfolio?.totalTradesCount || trades.length}</p>
+            <p className="text-xl font-bold tabular-nums">{totalTradesCount}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Avg Simulated Slippage</p>
             <p className="text-xl font-bold tabular-nums text-amber-400">
-              {portfolio?.avgSlippagePct || '0.08'}%
+              {avgSlippage}%
             </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Total Simulated Fees</p>
             <p className="text-xl font-bold tabular-nums text-muted-foreground">
-              ${portfolio?.totalFeesUsd || '4.50'}
+              ${totalFees}
             </p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Best Performer</p>
-            <p className="text-xl font-bold tabular-nums text-emerald-400">NVDAx (+3.25%)</p>
+            <p
+              className={cn(
+                'text-base font-bold tabular-nums truncate',
+                bestTrade ? 'text-emerald-400' : 'text-muted-foreground font-normal'
+              )}
+            >
+              {bestPerformerDisplay}
+            </p>
           </div>
         </div>
       </GlassPanel>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import {
@@ -64,6 +64,47 @@ export default function PortfolioPage() {
 
   // Aggregate active open positions
   const openPaperPositions = (paperPortfolio?.trades || []).filter((t: PaperTradeRecord) => t.status === 'filled');
+
+  // Dynamically compute real asset concentration from actual user holdings
+  const totalPortfolioVal = viewMode === 'paper' ? (paperPortfolio?.totalPortfolioValue || 100000) : (totalOnChainValue || 1);
+  const concentrationItems = useMemo(() => {
+    if (viewMode === 'paper') {
+      if (openPaperPositions.length === 0) {
+        return [
+          { label: 'Available USD Cash Liquidity', weight: 100, color: '#10b981' }
+        ];
+      }
+      const items = openPaperPositions.map((pos, idx) => {
+        const livePrice = quotes[pos.symbol.replace(/x$/, '')]?.price || pos.executionPrice;
+        const posValue = pos.quantity * livePrice;
+        const weight = Math.max(0, Math.min(100, (posValue / totalPortfolioVal) * 100));
+        const colors = ['#3fb98a', '#4cc9f0', '#a78bfa', '#f59e0b', '#ec4899', '#8b5cf6'];
+        return {
+          label: `${pos.symbol} (${pos.side.toUpperCase()})`,
+          weight,
+          color: colors[idx % colors.length],
+        };
+      });
+      const investedWeight = items.reduce((a, b) => a + b.weight, 0);
+      const cashWeight = Math.max(0, 100 - investedWeight);
+      if (cashWeight > 0.1) {
+        items.push({ label: 'Cash Reserve (Uninvested)', weight: cashWeight, color: '#10b981' });
+      }
+      return items;
+    } else {
+      if (!connected || totalOnChainValue <= 0) {
+        return [
+          { label: 'No On-Chain Assets in Connected Wallet', weight: 100, color: '#6b7280' }
+        ];
+      }
+      const solWeight = totalOnChainValue > 0 ? (solValueUsd / totalOnChainValue) * 100 : 0;
+      const usdcWeight = totalOnChainValue > 0 ? (balanceUsdc / totalOnChainValue) * 100 : 0;
+      return [
+        { label: 'Solana Native (SOL)', weight: solWeight, color: '#9945FF' },
+        { label: 'USD Coin (USDC)', weight: usdcWeight, color: '#2775CA' },
+      ].filter(i => i.weight > 0);
+    }
+  }, [viewMode, openPaperPositions, totalPortfolioVal, quotes, connected, totalOnChainValue, solValueUsd, balanceUsdc]);
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
@@ -212,10 +253,15 @@ export default function PortfolioPage() {
         <GlassPanel hover className="p-4">
           <p className="text-xs font-medium tracking-wide text-muted-foreground">Win Rate / Quality</p>
           <p className="mt-1 text-xl font-bold text-foreground">
-            <AnimatedNumber value={viewMode === 'paper' ? paperPortfolio?.winRate || 75 : 88} decimals={0} />%
+            <AnimatedNumber
+              value={viewMode === 'paper' ? (paperPortfolio?.totalTradesCount ? paperPortfolio.winRate : 0) : (connected ? 100 : 0)}
+              decimals={0}
+            />%
           </p>
           <p className="mt-1 text-xs text-muted-foreground font-mono">
-            {viewMode === 'paper' ? 'Paper Trades' : 'Token-2022 Verified'}
+            {viewMode === 'paper'
+              ? (paperPortfolio?.totalTradesCount ? `${paperPortfolio.totalTradesCount} Closed Trades` : '0 Trades (No History)')
+              : (connected ? 'Wallet Verified' : 'Wallet Not Connected')}
           </p>
         </GlassPanel>
       </div>
@@ -365,12 +411,7 @@ export default function PortfolioPage() {
             Asset Concentration
           </h2>
           <div className="space-y-3">
-            {[
-              { label: 'NVDAx (Technology)', weight: 38.5, color: '#3fb98a' },
-              { label: 'TSLAx (Consumer Discretionary)', weight: 26.2, color: '#4cc9f0' },
-              { label: 'AAPLx (Consumer Tech)', weight: 20.1, color: '#a78bfa' },
-              { label: 'USDC / Cash Reserve', weight: 15.2, color: '#f59e0b' },
-            ].map((c) => (
+            {concentrationItems.map((c) => (
               <div key={c.label}>
                 <div className="flex items-center justify-between mb-1 text-xs">
                   <span className="font-medium text-foreground">{c.label}</span>

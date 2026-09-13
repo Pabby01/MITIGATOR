@@ -31,7 +31,8 @@ export async function GET(req: NextRequest) {
 
     // 2. Get User Profile
     if (action === 'get_profile') {
-      const handle = searchParams.get('handle') || searchParams.get('address') || '@quant_research';
+      const handle = searchParams.get('handle') || searchParams.get('address');
+      if (!handle) return NextResponse.json({ error: 'Missing handle or address' }, { status: 400 });
       const profile = await getUserProfile(handle);
       return NextResponse.json({ profile });
     }

@@ -1,5 +1,5 @@
 import { getSupabase, isSupabaseConfigured } from './supabase';
-import { getLivePythPrice } from './pyth-service';
+import { getLivePythPrice, PYTH_FEED_IDS } from './pyth-service';
 import { getLiveJupiterQuote } from './jupiter-service';
 
 export interface PaperTradeRecord {
@@ -35,62 +35,9 @@ export interface PaperPortfolioSummary {
   trades: PaperTradeRecord[];
 }
 
+// User starting virtual balance
 const DEFAULT_CASH = 100000;
 const STORAGE_KEY_PREFIX = 'mitigator_paper_portfolio_';
-
-const INITIAL_DEMO_TRADES: PaperTradeRecord[] = [
-  {
-    id: 'paper-trade-1',
-    userAddress: 'guest',
-    symbol: 'NVDAx',
-    side: 'buy',
-    amountUsd: 1500,
-    quantity: 8.407,
-    executionPrice: 178.42,
-    currentPrice: 184.22,
-    venue: 'Jupiter DLMM',
-    feeUsd: 0.0,
-    slippagePct: 0.08,
-    unrealizedPnl: 48.76,
-    unrealizedPnlPct: 3.25,
-    status: 'filled',
-    timestamp: new Date(Date.now() - 3600000 * 24).toISOString(),
-  },
-  {
-    id: 'paper-trade-2',
-    userAddress: 'guest',
-    symbol: 'AAPLx',
-    side: 'buy',
-    amountUsd: 1000,
-    quantity: 4.46,
-    executionPrice: 224.12,
-    currentPrice: 228.5,
-    venue: 'Orca Whirlpool',
-    feeUsd: 2.5,
-    slippagePct: 0.1,
-    unrealizedPnl: 19.54,
-    unrealizedPnlPct: 1.95,
-    status: 'filled',
-    timestamp: new Date(Date.now() - 3600000 * 48).toISOString(),
-  },
-  {
-    id: 'paper-trade-3',
-    userAddress: 'guest',
-    symbol: 'TSLAx',
-    side: 'sell',
-    amountUsd: 800,
-    quantity: 3.16,
-    executionPrice: 252.8,
-    currentPrice: 248.5,
-    venue: 'Raydium CLMM',
-    feeUsd: 2.0,
-    slippagePct: 0.15,
-    unrealizedPnl: 13.59,
-    unrealizedPnlPct: 1.7,
-    status: 'filled',
-    timestamp: new Date(Date.now() - 3600000 * 72).toISOString(),
-  },
-];
 
 /**
  * Retrieve the current paper portfolio for a wallet
@@ -142,17 +89,16 @@ export async function getPaperPortfolio(userAddress: string = 'guest'): Promise<
       const stored = localStorage.getItem(`${STORAGE_KEY_PREFIX}${addr}`);
       if (stored) {
         const parsed = JSON.parse(stored);
-        trades = parsed.trades || [];
+        const storedTrades: PaperTradeRecord[] = parsed.trades || [];
+        // Filter out legacy demo trades
+        trades = storedTrades.filter(
+          (t) => t.id && !t.id.startsWith('paper-trade-')
+        );
         cashBalance = parsed.cashBalance !== undefined ? parsed.cashBalance : DEFAULT_CASH;
       }
     } catch {
       // ignore
     }
-  }
-
-  if (!trades.length && addr === 'guest') {
-    trades = INITIAL_DEMO_TRADES;
-    cashBalance = 96700; // 100k - (1500 + 1000 + 800)
   }
 
   // 3. Update active trades with live Pyth oracle prices
@@ -201,7 +147,7 @@ export async function getPaperPortfolio(userAddress: string = 'guest'): Promise<
   const filledTrades = enrichedTrades.filter((t) => t.status === 'filled');
   const winningTrades = enrichedTrades.filter((t) => t.unrealizedPnl > 0);
   const winRate = enrichedTrades.length ? Math.round((winningTrades.length / enrichedTrades.length) * 100) : 0;
-  const avgSlippagePct = enrichedTrades.length ? totalSlippage / enrichedTrades.length : 0.08;
+  const avgSlippagePct = enrichedTrades.length ? totalSlippage / enrichedTrades.length : 0.0;
 
   return {
     cashBalance: Math.round(cashBalance * 100) / 100,
@@ -232,13 +178,14 @@ export async function executePaperTrade(params: {
   const { userAddress = 'guest', symbol, side, amountUsd, venue = 'Jupiter' } = params;
 
   // 1. Fetch live Pyth Hermes oracle streaming price
+  const feed = PYTH_FEED_IDS[symbol] || PYTH_FEED_IDS['NVDAx'];
   const pyth = await getLivePythPrice(symbol).catch(() => ({
-    price: 184.22,
+    price: feed.fallbackPrice,
     conf: 0.02,
     stalenessMs: 120,
     isStale: false,
   }));
-  const executionPrice = pyth.price > 0 ? pyth.price : 184.22;
+  const executionPrice = pyth.price > 0 ? pyth.price : feed.fallbackPrice;
 
   // 2. Fetch live Jupiter quote for simulated AMM slippage & fees
   const jup = await getLiveJupiterQuote(symbol, amountUsd).catch(() => null);

@@ -72,7 +72,7 @@ export default function StockDetailPage() {
     };
   }, [symbol]);
 
-  const activeSocial = liveSocialPosts.length > 0 ? liveSocialPosts : social;
+  const activeSocial = liveSocialPosts;
 
   useEffect(() => {
     let active = true;
@@ -93,7 +93,7 @@ export default function StockDetailPage() {
     };
   }, [symbol]);
 
-  const activeFilings = liveFilings.length > 0 ? liveFilings : defaultFilings;
+  const activeFilings = liveFilings;
 
   useEffect(() => {
     let active = true;
@@ -486,43 +486,49 @@ export default function StockDetailPage() {
             <ShieldCheck className="h-4 w-4 text-amber-400 flex-shrink-0" />
             <p className="text-xs text-muted-foreground">Community posts are social signals, not verified financial facts. Always check the source tier.</p>
           </div>
-          {activeSocial.map((post, i) => (
-            <motion.div key={post.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-              <GlassPanel hover className="p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/30 to-accent/30" />
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-sm font-medium">{post.author}</p>
-                        {post.verified && <CheckCircle2 className="h-3 w-3 text-primary" />}
+          {activeSocial.length === 0 ? (
+            <div className="p-8 text-center text-xs text-muted-foreground font-mono">
+              No community research submissions for {symbol} yet. Visit Community Feed to post the first analysis.
+            </div>
+          ) : (
+            activeSocial.map((post, i) => (
+              <motion.div key={post.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                <GlassPanel hover className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/30 to-accent/30" />
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-medium">{post.author}</p>
+                          {post.verified && <CheckCircle2 className="h-3 w-3 text-primary" />}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{post.handle} · {post.platform}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground">{post.handle} · {post.platform}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={cn(
+                        'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded',
+                        post.sentiment === 'bullish' ? 'bg-emerald-500/10 text-emerald-400' :
+                        post.sentiment === 'bearish' ? 'bg-red-500/10 text-red-400' :
+                        'bg-zinc-500/10 text-zinc-400'
+                      )}>
+                        {post.sentiment}
+                      </span>
+                      <SourceBadge tier={post.sourceTier} />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={cn(
-                      'text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded',
-                      post.sentiment === 'bullish' ? 'bg-emerald-500/10 text-emerald-400' :
-                      post.sentiment === 'bearish' ? 'bg-red-500/10 text-red-400' :
-                      'bg-zinc-500/10 text-zinc-400'
-                    )}>
-                      {post.sentiment}
-                    </span>
-                    <SourceBadge tier={post.sourceTier} />
+                  <p className="text-sm leading-relaxed">{post.content}</p>
+                  <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+                    <span>{post.engagement?.likes || 0} likes</span>
+                    <span>{post.engagement?.replies || 0} replies</span>
+                    <span>{post.engagement?.reposts || 0} reposts</span>
+                    {post.evidenceAttached && <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 className="h-3 w-3" /> Evidence</span>}
+                    <span className="ml-auto">{new Date(post.postedAt).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
-                </div>
-                <p className="text-sm leading-relaxed">{post.content}</p>
-                <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
-                  <span>{post.engagement.likes} likes</span>
-                  <span>{post.engagement.replies} replies</span>
-                  <span>{post.engagement.reposts} reposts</span>
-                  {post.evidenceAttached && <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 className="h-3 w-3" /> Evidence</span>}
-                  <span className="ml-auto">{new Date(post.postedAt).toLocaleString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-                </div>
-              </GlassPanel>
-            </motion.div>
-          ))}
+                </GlassPanel>
+              </motion.div>
+            ))
+          )}
         </div>
       )}
 

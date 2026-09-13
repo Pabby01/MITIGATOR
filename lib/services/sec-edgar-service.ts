@@ -70,38 +70,9 @@ export async function getLiveSECFilings(symbol: string): Promise<SECFiling[]> {
         return filings;
       }
     }
-  } catch {
-    // Graceful fallback
+  } catch (err) {
+    console.warn('[SEC-EDGAR] Failed to fetch live filings for CIK:', cik, err);
   }
 
-  // Authoritative verified filings fallback
-  return [
-    {
-      form: '10-Q',
-      filingDate: '2026-08-28',
-      accessionNumber: '0001045810-26-000045',
-      primaryDocument: 'nvda-20260728.htm',
-      description: 'Quarterly Report for Period Ended July 28, 2026',
-      url: 'https://www.sec.gov/edgar/browse/?CIK=0001045810',
-      tier: 'PRIMARY',
-    },
-    {
-      form: '8-K',
-      filingDate: '2026-08-24',
-      accessionNumber: '0001045810-26-000042',
-      primaryDocument: 'nvda-8k-20260824.htm',
-      description: 'Regulation FD Disclosure — Q2 Financial Results',
-      url: 'https://www.sec.gov/edgar/browse/?CIK=0001045810',
-      tier: 'PRIMARY',
-    },
-    {
-      form: '10-K',
-      filingDate: '2026-02-21',
-      accessionNumber: '0001045810-26-000011',
-      primaryDocument: 'nvda-20260126.htm',
-      description: 'Annual Report for the Fiscal Year Ended January 26, 2026',
-      url: 'https://www.sec.gov/edgar/browse/?CIK=0001045810',
-      tier: 'PRIMARY',
-    },
-  ];
+  return [];
 }

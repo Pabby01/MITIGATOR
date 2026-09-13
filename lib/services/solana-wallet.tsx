@@ -48,29 +48,38 @@ export function formatShortAddress(addr: string | null): string {
  * Direct Solana JSON-RPC balance query
  */
 export async function fetchLiveSolBalance(pubkey: string): Promise<number> {
-  try {
-    const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
-    const res = await fetch(rpcUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'getBalance',
-        params: [pubkey],
-      }),
-      cache: 'no-store',
-    });
-    if (!res.ok) return 0;
-    const data = await res.json();
-    if (data?.result?.value !== undefined) {
-      return data.result.value / 1e9; // convert lamports to SOL
+  const rpcEndpoints = [
+    process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
+    'https://api.devnet.solana.com',
+    'https://api.mainnet-beta.solana.com',
+  ].filter(Boolean) as string[];
+
+  // Deduplicate endpoints
+  const uniqueEndpoints = Array.from(new Set(rpcEndpoints));
+
+  for (const rpcUrl of uniqueEndpoints) {
+    try {
+      const res = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'getBalance',
+          params: [pubkey],
+        }),
+        cache: 'no-store',
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data?.result?.value !== undefined && data.result.value > 0) {
+        return data.result.value / 1e9; // convert lamports to SOL
+      }
+    } catch {
+      // try next RPC endpoint
     }
-    return 0;
-  } catch (err) {
-    console.warn('[SolanaRPC] fetchLiveSolBalance error:', err);
-    return 0;
   }
+  return 0;
 }
 
 export function SolanaWalletProvider({ children }: { children: React.ReactNode }) {

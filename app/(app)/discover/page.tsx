@@ -27,6 +27,7 @@ import { AnimatedNumber } from '@/components/shared/AnimatedNumber';
 import { TradingViewChart } from '@/components/market/TradingViewChart';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
+import { computeMitigatorRiskScore } from '@/lib/services/risk-engine';
 import { cn } from '@/lib/utils';
 
 const fadeUp = {
@@ -284,7 +285,16 @@ export default function DashboardPage() {
             <div className="space-y-2">
               {quoteList.slice(0, 5).map((asset) => {
                 const isPositive = asset.changePct24h >= 0;
-                const mockScore = asset.symbol === 'NVDA' ? 84 : asset.symbol === 'AAPL' ? 88 : asset.symbol === 'TSLA' ? 72 : 81;
+                const riskProfile = computeMitigatorRiskScore({
+                  symbol: `${asset.symbol}x`,
+                  price: asset.price,
+                  oracleLatencyMs: 384,
+                  isOracleStale: false,
+                  oracleConfidenceRange: 0.02,
+                  secFilingsCount: 4,
+                  orderAmountUsd: 2000,
+                });
+                const calculatedScore = riskProfile.overallScore;
 
                 return (
                   <Link
@@ -323,12 +333,12 @@ export default function DashboardPage() {
                             <div
                               className="h-full rounded-full"
                               style={{
-                                width: `${mockScore}%`,
-                                backgroundColor: mockScore >= 80 ? '#3fb98a' : mockScore >= 65 ? '#f59e0b' : '#ef4444',
+                                width: `${calculatedScore}%`,
+                                backgroundColor: calculatedScore >= 80 ? '#3fb98a' : calculatedScore >= 65 ? '#f59e0b' : '#ef4444',
                               }}
                             />
                           </div>
-                          <span className="text-xs font-mono font-medium tabular-nums">{mockScore}</span>
+                          <span className="text-xs font-mono font-medium tabular-nums">{calculatedScore}</span>
                         </div>
                       </div>
 

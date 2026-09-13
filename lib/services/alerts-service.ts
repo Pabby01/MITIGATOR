@@ -17,51 +17,6 @@ export interface UserAlert {
 
 const STORAGE_KEY_ALERTS = 'mitigator_user_alerts_';
 
-const DEFAULT_ALERTS: UserAlert[] = [
-  {
-    id: 'alert-seed-1',
-    userAddress: 'guest',
-    type: 'price',
-    symbol: 'NVDAx',
-    condition: 'above',
-    threshold: 190.0,
-    currentValue: 184.22,
-    triggered: false,
-    triggeredAt: null,
-    active: true,
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    notes: 'Breakout above $190 key resistance level',
-  },
-  {
-    id: 'alert-seed-2',
-    userAddress: 'guest',
-    type: 'risk',
-    symbol: 'TSLAx',
-    condition: 'below',
-    threshold: 65,
-    currentValue: 74,
-    triggered: false,
-    triggeredAt: null,
-    active: true,
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-    notes: 'MITIGATOR Risk score deterioration alert',
-  },
-  {
-    id: 'alert-seed-3',
-    userAddress: 'guest',
-    type: 'peg_divergence',
-    symbol: 'AAPLx',
-    condition: 'above',
-    threshold: 0.15,
-    currentValue: 0.03,
-    triggered: false,
-    triggeredAt: null,
-    active: true,
-    createdAt: new Date(Date.now() - 259200000).toISOString(),
-    notes: 'Onchain Token-2022 depeg circuit breaker',
-  },
-];
-
 /**
  * Fetch all alerts for a user
  */
@@ -70,7 +25,12 @@ export async function getUserAlerts(userAddress: string = 'guest'): Promise<User
   if (typeof window !== 'undefined') {
     try {
       const stored = localStorage.getItem(`${STORAGE_KEY_ALERTS}${userAddress}`);
-      if (stored) localAlerts = JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          localAlerts = parsed.filter((a) => a.id && !a.id.startsWith('alert-seed-'));
+        }
+      }
     } catch (e) {
       console.warn('Failed to load local alerts:', e);
     }
@@ -94,7 +54,7 @@ export async function getUserAlerts(userAddress: string = 'guest'): Promise<User
     }
   }
 
-  return localAlerts.length > 0 ? localAlerts : DEFAULT_ALERTS;
+  return localAlerts;
 }
 
 /**

@@ -1,4 +1,4 @@
-import { getLivePythPrice } from './pyth-service';
+import { getLivePythPrice, PYTH_FEED_IDS } from './pyth-service';
 import { getLiveSECFilings } from './sec-edgar-service';
 import { getLiveJupiterQuote } from './jupiter-service';
 
@@ -19,9 +19,10 @@ export interface ProvenanceRecord {
 }
 
 export async function getLiveProvenanceRecords(symbol: string = 'NVDAx'): Promise<ProvenanceRecord[]> {
+  const feed = PYTH_FEED_IDS[symbol] || PYTH_FEED_IDS['NVDAx'];
   const [pyth, filings, jupiter] = await Promise.all([
     getLivePythPrice(symbol).catch(() => ({
-      price: 184.22,
+      price: feed.fallbackPrice,
       conf: 0.02,
       stalenessMs: 384,
       isStale: false,
@@ -31,13 +32,7 @@ export async function getLiveProvenanceRecords(symbol: string = 'NVDAx'): Promis
   ]);
 
   const now = new Date().toISOString();
-  const latestFiling = filings[0] || {
-    form: '10-Q',
-    filingDate: '2026-08-28',
-    accessionNumber: '0001045810-26-000045',
-    url: 'https://www.sec.gov/edgar/browse/?CIK=0001045810',
-    description: 'Quarterly Financial Report',
-  };
+  const latestFiling = filings[0];
 
   const records: ProvenanceRecord[] = [
     {
@@ -57,18 +52,22 @@ export async function getLiveProvenanceRecords(symbol: string = 'NVDAx'): Promis
     },
     {
       id: `prov-sec-${symbol}`,
-      dataPoint: `Audited Capital Structure & Filing (Form ${latestFiling.form})`,
+      dataPoint: latestFiling
+        ? `Audited Capital Structure & Filing (Form ${latestFiling.form})`
+        : `Audited Capital Structure & Filing (SEC EDGAR Status)`,
       provider: 'U.S. Securities & Exchange Commission (SEC EDGAR)',
       endpoint: `https://data.sec.gov/submissions/CIK`,
       sourceTier: 'PRIMARY',
-      freshness: 'fresh',
+      freshness: latestFiling ? 'fresh' : 'delayed',
       retrievedAt: now,
-      publishedAt: `${latestFiling.filingDate}T00:00:00.000Z`,
-      confidence: 1.0,
-      verification: 'verified',
-      canonicalHash: latestFiling.accessionNumber || '0001045810-26-000045',
-      proofUrl: latestFiling.url,
-      verificationDetails: `Official SEC regulatory submission accession #${latestFiling.accessionNumber}. Verified primary document: ${latestFiling.description}.`,
+      publishedAt: latestFiling ? `${latestFiling.filingDate}T00:00:00.000Z` : now,
+      confidence: latestFiling ? 1.0 : 0.8,
+      verification: latestFiling ? 'verified' : 'partial',
+      canonicalHash: latestFiling?.accessionNumber || 'sec_edgar_awaiting_feed',
+      proofUrl: latestFiling?.url || 'https://www.sec.gov/edgar/searchedgar/companysearch',
+      verificationDetails: latestFiling
+        ? `Official SEC regulatory submission accession #${latestFiling.accessionNumber}. Verified primary document: ${latestFiling.description}.`
+        : `Connecting to SEC EDGAR API gateway for official corporate submissions.`,
     },
     {
       id: `prov-jup-${symbol}`,

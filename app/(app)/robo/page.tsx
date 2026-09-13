@@ -21,6 +21,7 @@ import { RiskBadge } from '@/components/shared/SourceBadge';
 import { getRoboProfiles } from '@/lib/mock-data';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
+import { PYTH_FEED_IDS } from '@/lib/services/pyth-service';
 import { saveUserProfile, getUserProfile } from '@/lib/services/user-profile';
 import { cn } from '@/lib/utils';
 
@@ -281,7 +282,7 @@ export default function RoboPage() {
         <div className="space-y-3 pt-2">
           {profile.allocation.map((a) => {
             const rawSym = a.symbol.replace(/x$/, '');
-            const liveP = quotes[rawSym]?.price || 184.22;
+            const liveP = quotes[rawSym]?.price || PYTH_FEED_IDS[a.symbol]?.fallbackPrice || 100;
             const trancheUsd = (deploymentAmount * a.weight) / 100;
             const estShares = trancheUsd / liveP;
 

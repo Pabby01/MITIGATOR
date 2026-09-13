@@ -246,7 +246,7 @@ export default function CommunityPage() {
     if (connected && (address || shortAddress)) {
       openProfile(address || shortAddress);
     } else {
-      openProfile('@quant_research');
+      setIsModalOpen(true);
     }
   };
 
@@ -349,17 +349,25 @@ export default function CommunityPage() {
 
               {/* Sentiment Ratio */}
               <div className="flex items-center gap-2 text-xs font-mono">
-                <span className="text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-                  {sentimentData.bullishPct}% Bullish
-                </span>
-                <span className="text-muted-foreground">·</span>
-                <span className="text-red-400 font-bold px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20">
-                  {sentimentData.bearishPct}% Bearish
-                </span>
-                {sentimentData.neutralPct > 0 && (
+                {sentimentData.sampleSize === 0 ? (
+                  <span className="text-muted-foreground font-medium px-2.5 py-0.5 rounded bg-card/90 border border-border/80">
+                    0 Submissions (Awaiting First Post)
+                  </span>
+                ) : (
                   <>
+                    <span className="text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                      {sentimentData.bullishPct}% Bullish
+                    </span>
                     <span className="text-muted-foreground">·</span>
-                    <span className="text-zinc-400 font-medium">{sentimentData.neutralPct}% Neutral</span>
+                    <span className="text-red-400 font-bold px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20">
+                      {sentimentData.bearishPct}% Bearish
+                    </span>
+                    {sentimentData.neutralPct > 0 && (
+                      <>
+                        <span className="text-muted-foreground">·</span>
+                        <span className="text-zinc-400 font-medium">{sentimentData.neutralPct}% Neutral</span>
+                      </>
+                    )}
                   </>
                 )}
               </div>

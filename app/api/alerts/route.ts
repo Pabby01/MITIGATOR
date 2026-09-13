@@ -6,7 +6,7 @@ import {
   toggleUserAlert,
   evaluateLiveAlerts,
 } from '@/lib/services/alerts-service';
-import { getLivePythPrice } from '@/lib/services/pyth-service';
+import { getLivePythPrice, PYTH_FEED_IDS } from '@/lib/services/pyth-service';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,10 +17,10 @@ export async function GET(req: NextRequest) {
 
     // Fetch live prices for quick evaluation
     const [nvda, tsla, aapl, msft] = await Promise.all([
-      getLivePythPrice('NVDAx').catch(() => ({ price: 184.22 })),
-      getLivePythPrice('TSLAx').catch(() => ({ price: 218.45 })),
-      getLivePythPrice('AAPLx').catch(() => ({ price: 224.30 })),
-      getLivePythPrice('MSFTx').catch(() => ({ price: 428.10 })),
+      getLivePythPrice('NVDAx').catch(() => ({ price: PYTH_FEED_IDS['NVDAx'].fallbackPrice })),
+      getLivePythPrice('TSLAx').catch(() => ({ price: PYTH_FEED_IDS['TSLAx'].fallbackPrice })),
+      getLivePythPrice('AAPLx').catch(() => ({ price: PYTH_FEED_IDS['AAPLx'].fallbackPrice })),
+      getLivePythPrice('MSFTx').catch(() => ({ price: PYTH_FEED_IDS['MSFTx'].fallbackPrice })),
     ]);
 
     const livePrices: Record<string, number> = {

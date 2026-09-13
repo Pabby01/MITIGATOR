@@ -256,14 +256,14 @@ export default function StrategiesPage() {
             riskLevel: newStratRisk,
             methodology: newStratMethodology || 'Volatility-scaled breakout with stop-loss protection.',
             targetAssets: [newStratAsset],
-            roi: 28.4,
-            drawdown: 5.8,
-            sharpe: 1.76,
-            winRate: 74,
-            volatility: 19,
-            tradeFrequency: 4.0,
-            holdingPeriod: '2-5 days',
-            concentration: 30,
+            roi: 0,
+            drawdown: 0,
+            sharpe: 0,
+            winRate: 0,
+            volatility: 0,
+            tradeFrequency: 0,
+            holdingPeriod: 'Active',
+            concentration: 0,
           },
         }),
       });
@@ -392,6 +392,27 @@ export default function StrategiesPage() {
         <div className="p-16 text-center space-y-3">
           <Loader2 className="h-8 w-8 text-primary animate-spin mx-auto" />
           <p className="text-xs font-mono text-muted-foreground">Syncing strategy marketplace registry...</p>
+        </div>
+      ) : filteredStrategies.length === 0 ? (
+        <div className="p-16 text-center border border-dashed border-border/60 rounded-2xl bg-card/20 space-y-4">
+          <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <Cpu className="h-6 w-6" />
+          </div>
+          <div className="space-y-1 max-w-md mx-auto">
+            <h3 className="text-base font-semibold">No Strategies Registered Yet</h3>
+            <p className="text-xs text-muted-foreground">
+              {filter === 'subscribed'
+                ? "You haven't followed or copied any strategies yet."
+                : "The decentralized strategy marketplace currently has no registered models. Click '+ Create Strategy' above to register your quantitative algorithm or connect your Supabase database."}
+            </p>
+          </div>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Create First Strategy
+          </button>
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">

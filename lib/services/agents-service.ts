@@ -1,5 +1,5 @@
 import { getLiveSECFilings } from './sec-edgar-service';
-import { getLivePythPrice } from './pyth-service';
+import { getLivePythPrice, PYTH_FEED_IDS } from './pyth-service';
 import { getLiveJupiterQuote } from './jupiter-service';
 import { computeMitigatorRiskScore } from './risk-engine';
 import { getCommunityPosts, computeCommunitySentiment } from './community-service';
@@ -161,9 +161,11 @@ export const AGENTS_REGISTRY: AIAgent[] = [
 export async function runAgentLive(agentId: string, symbol: string = 'NVDAx'): Promise<AgentRunResult> {
   const timestamp = new Date().toISOString();
 
+  const feed = PYTH_FEED_IDS[symbol] || PYTH_FEED_IDS['NVDAx'];
+
   switch (agentId) {
     case 'research': {
-      const pyth = await getLivePythPrice(symbol).catch(() => ({ price: 120, conf: 0.02, stalenessMs: 120, isStale: false }));
+      const pyth = await getLivePythPrice(symbol).catch(() => ({ price: feed.fallbackPrice, conf: 0.02, stalenessMs: 120, isStale: false }));
       return {
         agentId,
         timestamp,
@@ -180,7 +182,7 @@ export async function runAgentLive(agentId: string, symbol: string = 'NVDAx'): P
 
     case 'news': {
       const filings = await getLiveSECFilings(symbol).catch(() => []);
-      const latestForm = filings[0]?.form || '8-K';
+      const latestForm = filings[0]?.form || 'EDGAR Feed';
       return {
         agentId,
         timestamp,
@@ -188,7 +190,7 @@ export async function runAgentLive(agentId: string, symbol: string = 'NVDAx'): P
         confidence: 0.85,
         findings: [
           `Real-time financial disclosures scanned across SEC EDGAR and news feeds for ${symbol}`,
-          `Latest disclosure filing: Form ${latestForm} without material adverse operational impairments`,
+          `Latest disclosure filing: Form ${latestForm} monitored for material disclosures`,
           `Macro sentiment: Institutional demand sustained across tokenized equity trading venues`,
         ],
         telemetry: { monitoredSources: 14, adverseHeadlines: 0, latestForm },
@@ -197,18 +199,22 @@ export async function runAgentLive(agentId: string, symbol: string = 'NVDAx'): P
 
     case 'filings': {
       const filings = await getLiveSECFilings(symbol).catch(() => []);
-      const latest = filings[0] || { form: '10-K', filingDate: '2024-03-15' };
+      const latest = filings[0];
       return {
         agentId,
         timestamp,
         status: 'success',
-        confidence: 0.96,
+        confidence: latest ? 0.96 : 0.8,
         findings: [
-          `Retrieved ${filings.length} audited SEC filings for ${symbol}`,
-          `Latest filing: Form ${latest.form} recorded on ${latest.filingDate}`,
+          latest
+            ? `Retrieved ${filings.length} audited SEC filings for ${symbol}`
+            : `Connecting to SEC EDGAR gateway for ${symbol} disclosures`,
+          latest
+            ? `Latest filing: Form ${latest.form} recorded on ${latest.filingDate}`
+            : `No recent SEC filings returned via direct CIK lookup`,
           `Corporate governance and balance sheet verified authentic via SEC EDGAR submissions API`,
         ],
-        telemetry: { filingsCount: filings.length, latestForm: latest.form, filingDate: latest.filingDate },
+        telemetry: { filingsCount: filings.length, latestForm: latest?.form || 'None', filingDate: latest?.filingDate || 'N/A' },
       };
     }
 
@@ -247,7 +253,7 @@ export async function runAgentLive(agentId: string, symbol: string = 'NVDAx'): P
 
     case 'risk': {
       const pyth = await getLivePythPrice(symbol).catch(() => ({
-        price: 184.22,
+        price: feed.fallbackPrice,
         conf: 0.02,
         stalenessMs: 384,
         isStale: false,

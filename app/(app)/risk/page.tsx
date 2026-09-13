@@ -21,6 +21,7 @@ import { RiskBadge } from '@/components/shared/SourceBadge';
 import { getAllAssets } from '@/lib/mock-data';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
 import { computeMitigatorRiskScore } from '@/lib/services/risk-engine';
+import { PYTH_FEED_IDS } from '@/lib/services/pyth-service';
 import { cn } from '@/lib/utils';
 
 export default function RiskPage() {
@@ -32,7 +33,8 @@ export default function RiskPage() {
   const [dca, setDca] = useState(true);
 
   const cleanSymbol = symbol.replace(/x$/, '');
-  const liveQuote = quotes[cleanSymbol] || { price: 184.22, change24h: 3.4, changePct24h: 1.88 };
+  const feed = PYTH_FEED_IDS[symbol] || PYTH_FEED_IDS['NVDAx'];
+  const liveQuote = quotes[cleanSymbol] || { price: feed.fallbackPrice, change24h: 0, changePct24h: 0 };
 
   // Compute dynamic risk profile based on live telemetry and selected symbol/amount
   const riskProfile = useMemo(() => {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLivePythPrice } from '@/lib/services/pyth-service';
+import { getLivePythPrice, PYTH_FEED_IDS } from '@/lib/services/pyth-service';
 import { getLiveSECFilings } from '@/lib/services/sec-edgar-service';
 import { getLiveJupiterQuote } from '@/lib/services/jupiter-service';
 import { computeMitigatorRiskScore } from '@/lib/services/risk-engine';
@@ -10,11 +10,12 @@ export async function POST(req: NextRequest) {
     const { query = 'Should I buy $2,000 of NVDAx?', symbol = 'NVDAx', amount = 2000 } = body;
 
     const cleanSymbol = symbol.replace(/x$/, '');
+    const feed = PYTH_FEED_IDS[symbol] || PYTH_FEED_IDS['NVDAx'];
 
     // 1. Fetch live telemetry in parallel
     const [pythPrice, secFilings, jupQuote] = await Promise.all([
       getLivePythPrice(symbol).catch(() => ({
-        price: 119.82,
+        price: feed.fallbackPrice,
         conf: 0.02,
         stalenessMs: 120,
         isStale: false,
@@ -115,7 +116,7 @@ Respond in JSON format with: verdict (string), summary (string), riskScore (numb
         {
           name: 'SEC EDGAR Submissions',
           tier: 'PRIMARY',
-          detail: `${secFilings.length || 5} Audited Filings`,
+          detail: `${secFilings.length} Audited Filings`,
         },
         {
           name: 'Solana Jupiter Aggregator v6',
