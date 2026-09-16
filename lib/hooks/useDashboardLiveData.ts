@@ -18,6 +18,8 @@ export interface DashboardAssetQuote {
 }
 
 const DEFAULT_ASSETS: Record<string, { name: string; basePrice: number; prevClose: number }> = {
+  SOL: { name: 'Solana', basePrice: 97.16, prevClose: 100.7 },
+  USDC: { name: 'USD Coin', basePrice: 1.0, prevClose: 1.0 },
   AAPL: { name: 'Apple Inc.', basePrice: 232.45, prevClose: 229.5 },
   NVDA: { name: 'NVIDIA Corporation', basePrice: 119.82, prevClose: 115.85 },
   TSLA: { name: 'Tesla, Inc.', basePrice: 248.5, prevClose: 250.63 },
@@ -53,12 +55,43 @@ export function useDashboardLiveData() {
   const [lastHeartbeat, setLastHeartbeat] = useState<number>(Date.now());
   const [loading, setLoading] = useState(true);
 
-  // Poll Pyth Hermes Prices
+  // Poll CoinGecko and Pyth Hermes Prices
   const loadPythPrices = useCallback(async () => {
     try {
+      // 1. Fetch live prices from our CoinGecko & Pyth aggregation API
+      const liveRes = await fetch('/api/prices').catch(() => null);
+      if (liveRes && liveRes.ok) {
+        const liveData = await liveRes.json();
+        if (liveData?.prices) {
+          setQuotes((prev) => {
+            const next = { ...prev };
+            for (const [sym, pData] of Object.entries(liveData.prices as Record<string, any>)) {
+              const rawSym = sym.replace(/x$/, '');
+              const def = DEFAULT_ASSETS[rawSym] || { name: rawSym, prevClose: pData.price };
+              next[rawSym] = {
+                symbol: rawSym,
+                name: def.name,
+                price: pData.price,
+                change24h: pData.change24h,
+                changePct24h: pData.changePct24h,
+                prevClose: def.prevClose,
+                isLive: true,
+                lastUpdated: pData.lastUpdated || Date.now(),
+                conf: 0.02,
+              };
+              // Also populate 'x' variant for direct indexing
+              next[`${rawSym}x`] = next[rawSym];
+            }
+            return next;
+          });
+          setIsPythConnected(true);
+          setLastHeartbeat(Date.now());
+        }
+      }
+
+      // 2. Also query multi-feed Pyth Hermes directly for on-chain confidence
       const symbols = Object.keys(DEFAULT_ASSETS);
-      const multi = await getMultiLivePythPrices(symbols);
-      let updatedCount = 0;
+      const multi = await getMultiLivePythPrices(symbols).catch(() => ({}));
 
       setQuotes((prev) => {
         const next = { ...prev };
@@ -81,18 +114,13 @@ export function useDashboardLiveData() {
               lastUpdated: pyth.publishTime,
               conf: pyth.conf,
             };
-            updatedCount++;
+            next[`${rawSym}x`] = next[rawSym];
           }
         }
         return next;
       });
-
-      if (updatedCount > 0) {
-        setIsPythConnected(true);
-        setLastHeartbeat(Date.now());
-      }
     } catch (err) {
-      console.warn('[useDashboardLiveData] Pyth poll error:', err);
+      console.warn('[useDashboardLiveData] Price poll error:', err);
     } finally {
       setLoading(false);
     }

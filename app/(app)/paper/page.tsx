@@ -21,6 +21,8 @@ import {
   HelpCircle,
   Clock,
   ShieldCheck,
+  ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { AnimatedNumber } from '@/components/shared/AnimatedNumber';
@@ -29,11 +31,12 @@ import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { PaperPortfolioSummary, PaperTradeRecord } from '@/lib/services/paper-trading-service';
 import { getAllAssets } from '@/lib/mock-data';
 import { PYTH_FEED_IDS } from '@/lib/services/pyth-service';
+import { executeRealSolanaTrade } from '@/lib/services/solana-transaction';
 import { cn } from '@/lib/utils';
 
 export default function PaperTradingPage() {
   const assets = getAllAssets();
-  const { address } = useSolanaWallet();
+  const { address, connected, network, walletType, setIsModalOpen, refreshBalance } = useSolanaWallet();
   const userAddr = address || 'guest';
 
   const [portfolio, setPortfolio] = useState<PaperPortfolioSummary | null>(null);
@@ -53,6 +56,14 @@ export default function PaperTradingPage() {
   const [slippageTolerance, setSlippageTolerance] = useState<number>(0.15);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [executionTarget, setExecutionTarget] = useState<'paper' | 'onchain'>('paper');
+  const [onchainSuccessTx, setOnchainSuccessTx] = useState<{ signature: string; explorerUrl: string } | null>(null);
+
+  useEffect(() => {
+    if (connected) {
+      setExecutionTarget('onchain');
+    }
+  }, [connected]);
 
   // Derive active asset & current live oracle estimate
   const activeAsset = useMemo(() => {
@@ -142,10 +153,62 @@ export default function PaperTradingPage() {
   const handleExecuteTrade = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    setOnchainSuccessTx(null);
 
     const finalAmount = Math.round(calculatedUsdAmount * 100) / 100;
     if (finalAmount <= 0) {
       setFormError('Please enter an amount greater than $0.00');
+      return;
+    }
+
+    if (executionTarget === 'onchain') {
+      if (!connected || !address) {
+        setIsModalOpen(true);
+        return;
+      }
+
+      setIsSubmitting(true);
+      try {
+        const result = await executeRealSolanaTrade({
+          userAddress: address,
+          symbol: tradeSymbol,
+          side: tradeSide,
+          amountUsd: finalAmount,
+          tokensAmount: calculatedShareQuantity,
+          executionPrice: livePriceEstimate,
+          venue: 'Jupiter DLMM Routing',
+          network,
+          walletType,
+        });
+
+        // Also record trade on server so it appears in journal
+        await fetch('/api/paper', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'execute',
+            userAddress: userAddr,
+            symbol: tradeSymbol,
+            side: tradeSide,
+            amountUsd: finalAmount,
+            venue: 'Jupiter On-Chain Devnet',
+            orderType,
+            limitPrice: orderType === 'limit' ? parseFloat(limitPrice) : undefined,
+          }),
+        }).catch(() => {});
+
+        setOnchainSuccessTx({
+          signature: result.signature,
+          explorerUrl: result.explorerUrl,
+        });
+        await refreshBalance().catch(() => {});
+        fetchPortfolio();
+      } catch (err: any) {
+        console.error('On-chain trade error:', err);
+        setFormError(err.message || 'On-chain transaction was rejected or failed.');
+      } finally {
+        setIsSubmitting(false);
+      }
       return;
     }
 
@@ -536,6 +599,60 @@ export default function PaperTradingPage() {
               )}
 
               <form onSubmit={handleExecuteTrade} className="space-y-4">
+                {/* Mode Selector: Virtual Paper vs Live Devnet Wallet */}
+                <div className="grid grid-cols-2 gap-1 rounded-xl bg-background/80 border border-border p-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExecutionTarget('paper');
+                      setOnchainSuccessTx(null);
+                    }}
+                    className={cn(
+                      'py-1.5 text-xs font-bold rounded-lg transition-all',
+                      executionTarget === 'paper'
+                        ? 'bg-primary text-primary-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Virtual Paper ($100k)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExecutionTarget('onchain');
+                      setOnchainSuccessTx(null);
+                    }}
+                    className={cn(
+                      'py-1.5 text-xs font-bold rounded-lg transition-all',
+                      executionTarget === 'onchain'
+                        ? 'bg-emerald-500 text-white shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Live Devnet Wallet
+                  </button>
+                </div>
+
+                {onchainSuccessTx && (
+                  <div className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-xs space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>Trade Confirmed on Solana Devnet!</span>
+                    </div>
+                    <p className="text-muted-foreground text-[11px]">
+                      Signature: <span className="font-mono text-foreground">{onchainSuccessTx.signature.slice(0, 8)}...{onchainSuccessTx.signature.slice(-6)}</span>
+                    </p>
+                    <a
+                      href={onchainSuccessTx.explorerUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-primary hover:underline font-mono text-[11px] flex items-center gap-1"
+                    >
+                      <span>View on Solana Explorer</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                )}
                 {/* 1. Asset Selector & Live Pyth Price */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
@@ -788,11 +905,23 @@ export default function PaperTradingPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting || calculatedUsdAmount <= 0}
-                  className="w-full py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm shadow-md transition-all disabled:opacity-50 active:scale-98"
+                  className={cn(
+                    "w-full py-3 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 active:scale-98 text-white",
+                    executionTarget === 'onchain' ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20" : "bg-primary hover:bg-primary/90 shadow-primary/20"
+                  )}
                 >
-                  {isSubmitting
-                    ? 'Executing against Pyth Oracle...'
-                    : `Simulate ${tradeSide.toUpperCase()} ${tradeSymbol} (${calculatedShareQuantity.toFixed(2)} shares)`}
+                  {isSubmitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {executionTarget === 'onchain' ? 'Awaiting Wallet Approval in Solflare...' : 'Executing against Pyth Oracle...'}
+                    </span>
+                  ) : executionTarget === 'onchain' ? (
+                    connected
+                      ? `Sign & Swap on Solana Devnet (${calculatedShareQuantity.toFixed(2)} shares)`
+                      : 'Connect Wallet to Trade Devnet Tokens'
+                  ) : (
+                    `Simulate ${tradeSide.toUpperCase()} ${tradeSymbol} (${calculatedShareQuantity.toFixed(2)} shares)`
+                  )}
                 </button>
               </form>
             </motion.div>

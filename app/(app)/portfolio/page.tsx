@@ -41,8 +41,8 @@ export default function PortfolioPage() {
   const [paperPortfolio, setPaperPortfolio] = useState<PaperPortfolioSummary | null>(null);
   const [isLoadingPaper, setIsLoadingPaper] = useState(true);
 
-  // Live Pyth SOL price (default to $142.50 if feed is establishing)
-  const liveSolPrice = quotes['SOL']?.price || 142.5;
+  // Live CoinGecko & Pyth SOL price
+  const liveSolPrice = quotes['SOL']?.price || 97.16;
   const solValueUsd = balanceSol * liveSolPrice;
   const totalOnChainValue = connected ? solValueUsd + balanceUsdc : 0;
 
@@ -270,7 +270,7 @@ export default function PortfolioPage() {
                 {(paperPortfolio?.totalUnrealizedPnl || 0).toFixed(2)} Unrealized
               </>
             ) : (
-              `Pyth SOL: $${liveSolPrice.toFixed(2)}`
+              `CoinGecko & Pyth SOL: $${liveSolPrice.toFixed(2)}`
             )}
           </p>
         </GlassPanel>

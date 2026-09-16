@@ -24,6 +24,7 @@ import { getAllAssets } from '@/lib/mock-data';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
 import { PYTH_FEED_IDS } from '@/lib/services/pyth-service';
+import { executeRealSolanaTrade } from '@/lib/services/solana-transaction';
 import { cn } from '@/lib/utils';
 
 export default function ExecutionPage() {
@@ -46,12 +47,20 @@ function ExecutionRouterContent() {
   const initialSymbol = searchParams.get('symbol') || 'NVDAx';
   const assets = getAllAssets();
   const { quotes: liveQuotes } = useDashboardLiveData();
-  const { connected, shortAddress, address, walletType, network, setIsModalOpen } = useSolanaWallet();
+  const { connected, shortAddress, address, walletType, network, setIsModalOpen, refreshBalance } = useSolanaWallet();
 
   const [symbol, setSymbol] = useState(initialSymbol);
   const [amount, setAmount] = useState(2000);
   const [stage, setStage] = useState<'compare' | 'review' | 'sign' | 'confirmed'>('compare');
-  const [executionMode, setExecutionMode] = useState<'paper' | 'onchain'>('paper');
+  const [executionMode, setExecutionMode] = useState<'paper' | 'onchain'>('onchain');
+  const [executionError, setExecutionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (connected) {
+      setExecutionMode('onchain');
+    }
+  }, [connected]);
+
   const [selectedQuoteVenue, setSelectedQuoteVenue] = useState<string | null>(null);
   const [quoteSecondsLeft, setQuoteSecondsLeft] = useState(8);
   const [copiedSignature, setCopiedSignature] = useState(false);
@@ -236,7 +245,9 @@ function ExecutionRouterContent() {
 
   // Broadcast & Execute Order
   const handleBroadcastOrder = async () => {
-    if (executionMode === 'onchain' && !connected) {
+    setExecutionError(null);
+
+    if (executionMode === 'onchain' && (!connected || !address)) {
       setIsModalOpen(true);
       return;
     }
@@ -267,25 +278,40 @@ function ExecutionRouterContent() {
             mode: 'paper',
           });
           setStage('confirmed');
+        } else {
+          throw new Error('Failed to record paper trade');
         }
       } else {
-        // Live Solana On-Chain Web3 Execution
-        await new Promise((resolve) => setTimeout(resolve, 800)); // Simulate Solana block confirmation
-        const txSig = `${Array.from({ length: 88 }, () => '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'[Math.floor(Math.random() * 58)]).join('')}`;
+        // Real Solana On-Chain Web3 Execution with Connected Wallet
+        const result = await executeRealSolanaTrade({
+          userAddress: address!,
+          symbol,
+          side: 'buy',
+          amountUsd: amount,
+          tokensAmount: activeQuote.expectedReceived,
+          executionPrice: activeQuote.expectedPrice,
+          venue: activeQuote.venue,
+          network,
+          walletType,
+        });
 
         setExecutedTrade({
-          id: txSig,
-          executionPrice: activeQuote.expectedPrice,
-          quantity: activeQuote.expectedReceived,
-          venue: activeQuote.venue,
-          timestamp: new Date().toISOString(),
+          id: result.signature,
+          executionPrice: result.tradeSummary.price,
+          quantity: result.tradeSummary.tokensReceived,
+          venue: result.tradeSummary.venue,
+          timestamp: result.tradeSummary.settledAt,
           mode: 'onchain',
-          explorerUrl: `https://solscan.io/tx/${txSig}`,
+          explorerUrl: result.explorerUrl,
+          solscanUrl: result.solscanUrl,
+          feeSol: result.feeSol,
         });
         setStage('confirmed');
+        await refreshBalance().catch(() => {});
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Execution failed:', e);
+      setExecutionError(e?.message || 'Transaction was rejected or failed on-chain.');
     } finally {
       setIsExecuting(false);
     }
@@ -698,6 +724,13 @@ function ExecutionRouterContent() {
                   </div>
                 </div>
 
+                {executionError && (
+                  <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs text-left">
+                    <p className="font-semibold">Execution Error:</p>
+                    <p className="text-[11px] mt-0.5">{executionError}</p>
+                  </div>
+                )}
+
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => setStage('review')}
@@ -713,12 +746,12 @@ function ExecutionRouterContent() {
                     {isExecuting ? (
                       <>
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        <span>Broadcasting Order...</span>
+                        <span>{executionMode === 'onchain' ? 'Approve in Wallet...' : 'Broadcasting Order...'}</span>
                       </>
                     ) : (
                       <>
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span>Approve &amp; Broadcast</span>
+                        <span>{executionMode === 'onchain' ? 'Sign & Swap on Devnet' : 'Approve & Broadcast'}</span>
                       </>
                     )}
                   </button>
