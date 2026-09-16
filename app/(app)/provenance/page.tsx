@@ -211,7 +211,7 @@ export default function ProvenancePage() {
 
       <div className="flex items-center gap-2 rounded-lg border border-border bg-card/30 p-3 text-xs text-muted-foreground">
         <ShieldCheck className="h-3.5 w-3.5 text-cyan-400 flex-shrink-0" />
-        MITIGATOR's provenance protocol prevents hallucinated or adversarial pricing by enforcing strict multi-signature oracle consensus and direct links to public SEC EDGAR primary records.
+        MITIGATOR&apos;s provenance protocol prevents hallucinated or adversarial pricing by enforcing strict multi-signature oracle consensus and direct links to public SEC EDGAR primary records.
       </div>
     </div>
   );

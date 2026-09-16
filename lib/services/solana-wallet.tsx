@@ -82,6 +82,53 @@ export async function fetchLiveSolBalance(pubkey: string): Promise<number> {
   return 0;
 }
 
+/**
+ * Direct Solana JSON-RPC query for SPL USDC balance
+ */
+export async function fetchLiveUsdcBalance(pubkey: string): Promise<number> {
+  const rpcEndpoints = [
+    process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
+    'https://api.mainnet-beta.solana.com',
+  ].filter(Boolean) as string[];
+
+  const uniqueEndpoints = Array.from(new Set(rpcEndpoints));
+  const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+
+  for (const rpcUrl of uniqueEndpoints) {
+    try {
+      const res = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 2,
+          method: 'getTokenAccountsByOwner',
+          params: [
+            pubkey,
+            { mint: USDC_MINT },
+            { encoding: 'jsonParsed' },
+          ],
+        }),
+        cache: 'no-store',
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const accounts = data?.result?.value;
+      if (Array.isArray(accounts) && accounts.length > 0) {
+        let total = 0;
+        for (const acc of accounts) {
+          const uiAmount = acc?.account?.data?.parsed?.info?.tokenAmount?.uiAmount;
+          if (typeof uiAmount === 'number') total += uiAmount;
+        }
+        return total;
+      }
+    } catch {
+      // try next endpoint
+    }
+  }
+  return 0;
+}
+
 export function SolanaWalletProvider({ children }: { children: React.ReactNode }) {
   const [connected, setConnected] = useState<boolean>(false);
   const [connecting, setConnecting] = useState<boolean>(false);
@@ -124,9 +171,12 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
   // Update on-chain balance when address changes
   const updateBalance = useCallback(async (pubkey: string) => {
     try {
-      const sol = await fetchLiveSolBalance(pubkey);
+      const [sol, usdc] = await Promise.all([
+        fetchLiveSolBalance(pubkey).catch(() => 0),
+        fetchLiveUsdcBalance(pubkey).catch(() => 0),
+      ]);
       setBalanceSol(sol);
-      setBalanceUsdc(0);
+      setBalanceUsdc(usdc);
     } catch {
       setBalanceSol(0);
       setBalanceUsdc(0);

@@ -54,6 +54,9 @@ export interface LiveTelemetryInputs {
   orderAmountUsd?: number;
   historicalVolatility?: number;
   beta?: number;
+  tokensPegDivergencePct?: number;
+  meteoraDynamicFeePct?: number;
+  meteoraVolatilityAccumulator?: number;
 }
 
 export function computeMitigatorRiskScore(inputs: LiveTelemetryInputs): CalculatedRiskProfile {
@@ -67,6 +70,9 @@ export function computeMitigatorRiskScore(inputs: LiveTelemetryInputs): Calculat
     jupiterSlippagePct = 0.04,
     orderAmountUsd = 2000,
     historicalVolatility = 0.28,
+    tokensPegDivergencePct = 0.02,
+    meteoraDynamicFeePct = 0.11,
+    meteoraVolatilityAccumulator = 120,
   } = inputs;
 
   // 1. Market Quality (Weight: 15%)
@@ -93,26 +99,32 @@ export function computeMitigatorRiskScore(inputs: LiveTelemetryInputs): Calculat
   else if (latestSecFilingForm === '8-K') eventScore = 72;
 
   // 5. Liquidity & Execution (Weight: 15%)
-  // Based on Jupiter DEX quote expected slippage for order size
+  // Combined Jupiter slippage + Meteora DLMM dynamic fee volatility
   let liquidityScore = 95;
   if (jupiterSlippagePct > 0.5) liquidityScore = 55;
   else if (jupiterSlippagePct > 0.2) liquidityScore = 72;
   else if (jupiterSlippagePct > 0.1) liquidityScore = 84;
-  else if (orderAmountUsd > 10000) liquidityScore -= 8;
+  if (orderAmountUsd > 10000) liquidityScore -= 8;
+  if (meteoraDynamicFeePct > 0.25) liquidityScore -= 12; // DLMM bin volatility surge
+  else if (meteoraVolatilityAccumulator > 200) liquidityScore -= 6;
 
   // 6. Token / On-Chain Integrity (Weight: 15%)
-  // Oracle latency + Token-2022 backing parity
-  let tokenIntegrityScore = 92;
+  // Oracle latency + Tokens.xyz multi-variant peg parity + Token-2022 backing
+  let tokenIntegrityScore = 94;
   if (isOracleStale || oracleLatencyMs > 2000) tokenIntegrityScore -= 30;
   else if (oracleLatencyMs > 800) tokenIntegrityScore -= 10;
   if (oracleConfidenceRange > 0.5) tokenIntegrityScore -= 12;
+  // Penalize for peg divergence across variants
+  const absPegDiv = Math.abs(tokensPegDivergencePct);
+  if (absPegDiv > 0.25) tokenIntegrityScore -= 22;
+  else if (absPegDiv > 0.10) tokenIntegrityScore -= 10;
 
   // 7. Portfolio Fit (Weight: 10%)
   const portfolioFitScore = 84;
 
   // 8. Data Confidence (Weight: 5%)
-  // Cross-source corroboration between Pyth Hermes + SEC EDGAR + Solana RPC
-  let dataConfidenceScore = 95;
+  // Cross-source corroboration between Pyth Hermes + Tokens.xyz + SEC EDGAR + Solana RPC
+  let dataConfidenceScore = 96;
   if (isOracleStale) dataConfidenceScore -= 25;
   if (secFilingsCount === 0) dataConfidenceScore -= 15;
 
@@ -165,8 +177,8 @@ export function computeMitigatorRiskScore(inputs: LiveTelemetryInputs): Calculat
       weight: 15,
       score: Math.max(10, Math.min(100, liquidityScore)),
       trend: 'up',
-      description: 'Solana AMM pool liquidity and expected Jupiter v6 route price impact.',
-      evidence: `${jupiterSlippagePct.toFixed(2)}% expected slip for $${orderAmountUsd.toLocaleString()}`,
+      description: 'Solana AMM/DLMM depth, Meteora dynamic fee health, and expected route slippage.',
+      evidence: `${jupiterSlippagePct.toFixed(2)}% slip · Meteora DLMM fee ${(meteoraDynamicFeePct * 100).toFixed(2)}%`,
     },
     {
       key: 'token_onchain',
@@ -175,8 +187,8 @@ export function computeMitigatorRiskScore(inputs: LiveTelemetryInputs): Calculat
       weight: 15,
       score: Math.max(10, Math.min(100, tokenIntegrityScore)),
       trend: 'up',
-      description: 'Token-2022 backing ratio, 1:1 share parity, and Pyth oracle sub-second latency.',
-      evidence: `Pyth latency ${oracleLatencyMs}ms · Parity < 0.04% dev`,
+      description: 'Tokens.xyz multi-variant parity, Token-2022 backing ratio, and Pyth oracle latency.',
+      evidence: `Tokens.xyz peg dev ${(tokensPegDivergencePct * 100).toFixed(2)}% · Pyth ${oracleLatencyMs}ms`,
     },
     {
       key: 'portfolio_fit',

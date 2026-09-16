@@ -21,6 +21,7 @@ import {
   ChevronRight,
   ExternalLink,
   Star,
+  Layers,
 } from 'lucide-react';
 import { TradingViewChart } from '@/components/market/TradingViewChart';
 import { GlassPanel, PriceChange } from '@/components/shared/GlassPanel';
@@ -31,9 +32,10 @@ import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/services/user-profile';
 import type { SECFiling } from '@/lib/services/sec-edgar-service';
+import type { TokenVariant } from '@/lib/services/tokens-service';
 import { cn } from '@/lib/utils';
 
-type Tab = 'overview' | 'news' | 'filings' | 'social' | 'timeline' | 'ai';
+type Tab = 'overview' | 'variants' | 'news' | 'filings' | 'social' | 'timeline' | 'ai';
 type Timeframe = '1D' | '1W' | '1M' | '3M' | '6M' | 'YTD' | '1Y' | '5Y' | 'MAX';
 
 export default function StockDetailPage() {
@@ -59,6 +61,27 @@ export default function StockDetailPage() {
   const [liveAiInsight, setLiveAiInsight] = useState<any>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [liveSocialPosts, setLiveSocialPosts] = useState<any[]>([]);
+  const [tokenVariants, setTokenVariants] = useState<TokenVariant[]>([]);
+  const [isVariantsLoading, setIsVariantsLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setIsVariantsLoading(true);
+    fetch(`/api/tokens?action=variants&symbol=${encodeURIComponent(symbol)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (active && data?.variants) {
+          setTokenVariants(data.variants);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active) setIsVariantsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [symbol]);
 
   const { address } = useSolanaWallet();
   const userAddress = address || 'guest';
@@ -278,6 +301,7 @@ export default function StockDetailPage() {
       <div className="flex items-center gap-1 border-b border-border overflow-x-auto scrollbar-thin">
         {[
           { key: 'overview' as const, label: 'Overview', icon: Activity },
+          { key: 'variants' as const, label: 'Tokens.xyz Variants', icon: Layers },
           { key: 'news' as const, label: 'News', icon: Newspaper },
           { key: 'filings' as const, label: 'Filings', icon: FileText },
           { key: 'social' as const, label: 'Community', icon: MessageSquare },
@@ -348,11 +372,14 @@ export default function StockDetailPage() {
 
             {/* Quick AI */}
             <GlassPanel hover className="p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="rounded-lg bg-primary/10 p-1.5">
-                  <Sparkles className="h-4 w-4 text-primary" />
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-primary" />
+                  <h3 className="text-sm font-semibold tracking-wide">MITIGATOR AI Brief</h3>
                 </div>
-                <h3 className="text-sm font-semibold tracking-wide">AI Quick Analysis</h3>
+                <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                  Real-Time
+                </span>
               </div>
               <div className="space-y-3">
                 <div className="rounded-lg border border-border p-3">
@@ -397,6 +424,100 @@ export default function StockDetailPage() {
               </div>
             </GlassPanel>
           </div>
+        </div>
+      )}
+
+      {/* Variants tab - Powered by Tokens.xyz */}
+      {tab === 'variants' && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-purple-500/20 bg-purple-500/5">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400">
+                <Layers className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-sm text-foreground font-semibold">
+                  Tokens.xyz Multi-Issuer Variant Matrix for {symbol}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Cross-issuer peg tracking, on-chain liquidity depth, and redemption transparency on Solana
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] font-mono px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/30 self-start sm:self-auto font-semibold">
+              Tokens API v1
+            </span>
+          </div>
+
+          <GlassPanel className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border text-xs text-muted-foreground uppercase tracking-wider">
+                    <th className="px-4 py-3 font-medium">Issuer / Token</th>
+                    <th className="px-4 py-3 font-medium">Standard</th>
+                    <th className="px-4 py-3 font-medium text-right">Price (USD)</th>
+                    <th className="px-4 py-3 font-medium text-right">Peg Divergence</th>
+                    <th className="px-4 py-3 font-medium text-right">24h Volume</th>
+                    <th className="px-4 py-3 font-medium text-right">Solana Liquidity</th>
+                    <th className="px-4 py-3 font-medium text-center">Custody Backing</th>
+                    <th className="px-4 py-3 font-medium text-center">Oracle Proof</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {tokenVariants.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-8 text-center text-xs text-muted-foreground font-mono">
+                        {isVariantsLoading ? 'Querying Tokens.xyz API v1...' : 'No external variants registered for this asset.'}
+                      </td>
+                    </tr>
+                  ) : (
+                    tokenVariants.map((v) => (
+                      <tr key={v.mint} className="hover:bg-card/50 transition-colors">
+                        <td className="px-4 py-3.5">
+                          <div className="font-semibold text-foreground">{v.symbol}</div>
+                          <div className="text-[11px] text-muted-foreground">{v.issuer}</div>
+                        </td>
+                        <td className="px-4 py-3.5 font-mono text-xs text-emerald-400 font-semibold">
+                          {v.standard}
+                        </td>
+                        <td className="px-4 py-3.5 text-right font-mono font-medium">
+                          ${v.price.toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3.5 text-right font-mono font-medium">
+                          <span className={cn(
+                            'px-2 py-0.5 rounded text-xs font-semibold',
+                            Math.abs(v.pegDivergencePct) < 0.05
+                              ? 'text-emerald-400 bg-emerald-500/10'
+                              : 'text-amber-400 bg-amber-500/10'
+                          )}>
+                            {v.pegDivergencePct > 0 ? `+${v.pegDivergencePct.toFixed(3)}%` : `${v.pegDivergencePct.toFixed(3)}%`}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 text-right font-mono text-xs text-muted-foreground">
+                          ${v.volume24hUsd.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3.5 text-right font-mono text-xs text-foreground font-bold">
+                          ${v.liquidityUsd.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <span className={cn(
+                            'text-[10px] px-2 py-0.5 rounded font-semibold',
+                            v.isRedeemable ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-muted text-muted-foreground'
+                          )}>
+                            {v.isRedeemable ? '1:1 Custody' : 'Synthetic'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 text-center text-xs font-mono text-muted-foreground">
+                          {v.oracleFeed}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </GlassPanel>
         </div>
       )}
 
