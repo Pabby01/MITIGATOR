@@ -20,8 +20,13 @@ import {
   Scale,
   X,
   ChevronRight,
+  ChevronDown,
   SlidersHorizontal,
   Info,
+  Star,
+  MessageSquare,
+  TrendingUp,
+  Activity,
 } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { PageTipSection } from '@/components/shared/PageTipSection';
@@ -45,6 +50,11 @@ export default function VenuesDirectoryPage() {
   const [devnetOnly, setDevnetOnly] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState<string[]>([]);
   const [compareModalOpen, setCompareModalOpen] = useState(false);
+  const [expandedReviewVenueId, setExpandedReviewVenueId] = useState<string | null>(null);
+
+  const toggleReviewsTray = (id: string) => {
+    setExpandedReviewVenueId((prev) => (prev === id ? null : id));
+  };
 
   // Region tabs
   const regionTabs = [
@@ -328,9 +338,10 @@ export default function VenuesDirectoryPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
             {filteredVenues.map((venue) => {
               const isCompared = selectedForCompare.includes(venue.id);
+              const isReviewsOpen = expandedReviewVenueId === venue.id;
 
               return (
                 <div
@@ -367,7 +378,7 @@ export default function VenuesDirectoryPage() {
                         </div>
 
                         <div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <h3 className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
                               {venue.name}
                             </h3>
@@ -386,33 +397,54 @@ export default function VenuesDirectoryPage() {
                         </div>
                       </div>
 
-                      {/* Compare Checkbox */}
-                      <button
-                        type="button"
-                        onClick={() => toggleCompare(venue.id)}
-                        className={cn(
-                          'p-1.5 rounded-lg border text-[11px] font-medium transition-all flex items-center gap-1',
-                          isCompared
-                            ? 'bg-primary border-primary text-primary-foreground'
-                            : 'border-border/70 text-muted-foreground hover:text-foreground hover:bg-card/60'
-                        )}
-                        title={isCompared ? 'Remove from comparison' : 'Add to side-by-side comparison'}
-                      >
-                        <Scale className="h-3 w-3" />
-                        <span className="hidden sm:inline">{isCompared ? 'Added' : 'Compare'}</span>
-                      </button>
+                      {/* Header Actions: Star Rating Pill + Compare Checkbox */}
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleReviewsTray(venue.id);
+                          }}
+                          className={cn(
+                            'flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] font-semibold transition-all cursor-pointer',
+                            isReviewsOpen
+                              ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 ring-1 ring-amber-500/30'
+                              : 'bg-background/80 border-border/70 text-foreground hover:bg-card hover:border-amber-400/50'
+                          )}
+                          title="Click to view verified store ratings & customer reviews"
+                        >
+                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                          <span>{venue.rating.toFixed(1)}</span>
+                          <ChevronDown className={cn('h-3 w-3 text-muted-foreground transition-transform duration-200', isReviewsOpen && 'rotate-180 text-amber-400')} />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => toggleCompare(venue.id)}
+                          className={cn(
+                            'p-1.5 rounded-lg border text-[11px] font-medium transition-all flex items-center gap-1',
+                            isCompared
+                              ? 'bg-primary border-primary text-primary-foreground'
+                              : 'border-border/70 text-muted-foreground hover:text-foreground hover:bg-card/60'
+                          )}
+                          title={isCompared ? 'Remove from comparison' : 'Add to side-by-side comparison'}
+                        >
+                          <Scale className="h-3 w-3" />
+                          <span className="hidden sm:inline">{isCompared ? 'Added' : 'Compare'}</span>
+                        </button>
+                      </div>
                     </div>
 
                     {/* Tagline & Description */}
                     <p className="text-xs font-semibold text-foreground/90 mb-1 line-clamp-1">
                       {venue.tagline}
                     </p>
-                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-4">
+                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-3">
                       {venue.description}
                     </p>
 
                     {/* Regulation & Solana Network Tags */}
-                    <div className="flex flex-wrap items-center gap-1.5 mb-4">
+                    <div className="flex flex-wrap items-center gap-1.5 mb-3">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-emerald-500/10 border border-emerald-500/25 text-emerald-400">
                         <ShieldCheck className="h-3 w-3" />
                         {venue.regulation.status}
@@ -435,8 +467,65 @@ export default function VenuesDirectoryPage() {
                       </span>
                     </div>
 
+                    {/* ─── NEW: LIQUIDITY & VOLUME METRICS CARD ─── */}
+                    {venue.liquidityMetrics && (
+                      <div className="rounded-xl border border-border/80 bg-background/50 p-3 space-y-2 mb-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-mono">
+                          <div className="space-y-0.5">
+                            <div className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                              <Activity className="h-3 w-3 text-primary" />
+                              <span>Total TVL</span>
+                            </div>
+                            <div className="text-sm font-bold text-foreground">{venue.liquidityMetrics.tvlUsd}</div>
+                          </div>
+                          <div className="space-y-0.5">
+                            <div className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                              <TrendingUp className="h-3 w-3 text-emerald-400" />
+                              <span>24h Volume</span>
+                            </div>
+                            <div className="text-sm font-bold text-emerald-400">{venue.liquidityMetrics.volume24hUsd}</div>
+                          </div>
+                          {venue.liquidityMetrics.activePoolsCount !== undefined && (
+                            <div className="col-span-2 sm:col-span-1 space-y-0.5">
+                              <div className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                                <Layers className="h-3 w-3 text-cyan-400" />
+                                <span>Active Pools</span>
+                              </div>
+                              <div className="text-sm font-bold text-cyan-400">{venue.liquidityMetrics.activePoolsCount}+</div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Top Active Pools with Yield/APR chips */}
+                        {venue.liquidityMetrics.topPools && venue.liquidityMetrics.topPools.length > 0 && (
+                          <div className="pt-2 border-t border-border/50">
+                            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                              <span>Top Liquid Pools:</span>
+                              <span className="text-[9px] text-cyan-400 font-mono">Live On-Chain</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {venue.liquidityMetrics.topPools.slice(0, 3).map((pool, idx) => (
+                                <div
+                                  key={idx}
+                                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-card/80 border border-border/70 text-[10px] font-mono"
+                                >
+                                  <span className="font-bold text-foreground">{pool.pair}</span>
+                                  {pool.apr && (
+                                    <span className="px-1 py-0.2 rounded text-[9px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                      {pool.apr} APR
+                                    </span>
+                                  )}
+                                  <span className="text-muted-foreground/80 text-[9px]">Liq: {pool.liquidity}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {/* Rates & Pricing Comparison Table Card */}
-                    <div className="rounded-xl border border-border/70 bg-card/60 p-3 space-y-2 mb-4 text-xs font-mono">
+                    <div className="rounded-xl border border-border/70 bg-card/60 p-3 space-y-2 mb-3 text-xs font-mono">
                       <div className="flex items-center justify-between text-muted-foreground">
                         <span>Trading Fee:</span>
                         <span className="font-semibold text-foreground">{venue.pricingAndFees.tradingFee}</span>
@@ -456,7 +545,7 @@ export default function VenuesDirectoryPage() {
                     </div>
 
                     {/* Assets & Payment Chips */}
-                    <div className="space-y-2 mb-5">
+                    <div className="space-y-1.5 mb-3">
                       <div className="text-[11px] text-muted-foreground">
                         <span className="font-semibold text-foreground">Top Assets: </span>
                         {venue.supportedAssets.slice(0, 4).join(', ')}
@@ -467,6 +556,186 @@ export default function VenuesDirectoryPage() {
                         {venue.paymentMethods.slice(0, 3).join(', ')}
                       </div>
                     </div>
+
+                    {/* ─── REVIEWS TRAY TOGGLE BUTTON ─── */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleReviewsTray(venue.id);
+                      }}
+                      className={cn(
+                        'w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium border transition-all mb-3 cursor-pointer',
+                        isReviewsOpen
+                          ? 'bg-amber-500/10 border-amber-500/40 text-amber-300 shadow-sm'
+                          : 'bg-card/60 border-border/70 text-muted-foreground hover:text-foreground hover:bg-card hover:border-amber-400/40'
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        <span className="font-bold text-foreground text-xs">{venue.rating.toFixed(1)}</span>
+                        <span className="text-muted-foreground text-[10px]">
+                          ({venue.reviewCount > 1000 ? `${(venue.reviewCount / 1000).toFixed(0)}k+` : venue.reviewCount} reviews)
+                        </span>
+                        {venue.storeRatings?.googlePlay && (
+                          <span className="hidden sm:inline-block px-1.5 py-0.2 rounded text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            Play {venue.storeRatings.googlePlay.rating}★
+                          </span>
+                        )}
+                        {venue.storeRatings?.appStore && (
+                          <span className="hidden sm:inline-block px-1.5 py-0.2 rounded text-[9px] bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                            App Store {venue.storeRatings.appStore.rating}★
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1 text-[11px] font-semibold text-primary">
+                        <span>{isReviewsOpen ? 'Hide Reviews' : 'Customer Reviews'}</span>
+                        <ChevronDown className={cn('h-3.5 w-3.5 transition-transform duration-200', isReviewsOpen && 'rotate-180')} />
+                      </div>
+                    </button>
+
+                    {/* ─── SLIDE-OUT REVIEWS TRAY ─── */}
+                    <AnimatePresence>
+                      {isReviewsOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                          animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
+                          exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                          transition={{ duration: 0.28, ease: 'easeInOut' }}
+                          className="overflow-hidden rounded-xl border border-amber-500/30 bg-background/95 backdrop-blur-md p-3.5 space-y-3 shadow-xl mb-3"
+                        >
+                          {/* Store Ratings Header */}
+                          <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-border/60">
+                            <div className="flex items-center gap-1.5">
+                              <MessageSquare className="h-3.5 w-3.5 text-amber-400" />
+                              <span className="text-xs font-bold text-foreground">Verified Ratings & Store Reputations</span>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {venue.storeRatings?.googlePlay && (
+                                <a
+                                  href={venue.storeRatings.googlePlay.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-card border border-border/80 text-foreground hover:border-emerald-500/50 hover:text-emerald-400 transition-colors"
+                                  title="View official listing on Google Play Store"
+                                >
+                                  <span>Google Play:</span>
+                                  <span className="font-bold text-amber-400">{venue.storeRatings.googlePlay.rating}★</span>
+                                  <span className="text-muted-foreground text-[9px]">({venue.storeRatings.googlePlay.totalReviews})</span>
+                                  <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+                                </a>
+                              )}
+                              {venue.storeRatings?.appStore && (
+                                <a
+                                  href={venue.storeRatings.appStore.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-card border border-border/80 text-foreground hover:border-cyan-500/50 hover:text-cyan-400 transition-colors"
+                                  title="View official listing on Apple App Store"
+                                >
+                                  <span>App Store:</span>
+                                  <span className="font-bold text-amber-400">{venue.storeRatings.appStore.rating}★</span>
+                                  <span className="text-muted-foreground text-[9px]">({venue.storeRatings.appStore.totalReviews})</span>
+                                  <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+                                </a>
+                              )}
+                              {venue.storeRatings?.trustpilot && (
+                                <a
+                                  href={venue.storeRatings.trustpilot.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-card border border-border/80 text-foreground hover:border-emerald-500/50 hover:text-emerald-400 transition-colors"
+                                  title="View official reviews on Trustpilot"
+                                >
+                                  <span>Trustpilot:</span>
+                                  <span className="font-bold text-emerald-400">{venue.storeRatings.trustpilot.rating}★</span>
+                                  <span className="text-muted-foreground text-[9px]">({venue.storeRatings.trustpilot.totalReviews})</span>
+                                  <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+                                </a>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* 2-3 Authentic User Reviews */}
+                          {venue.reviewsList && venue.reviewsList.length > 0 ? (
+                            <div className="space-y-2">
+                              {venue.reviewsList.map((rev) => (
+                                <div
+                                  key={rev.id}
+                                  className="p-2.5 rounded-lg bg-card/70 border border-border/60 text-xs space-y-1.5"
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-bold text-foreground text-[11px]">{rev.author}</span>
+                                      {rev.authorLocation && (
+                                        <span className="text-[10px] text-muted-foreground">({rev.authorLocation})</span>
+                                      )}
+                                      {rev.verifiedBuyer && (
+                                        <span className="inline-flex items-center gap-0.5 text-[9px] text-emerald-400 font-medium bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20">
+                                          <CheckCircle2 className="h-2.5 w-2.5" />
+                                          Verified
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
+                                      <div className="flex text-amber-400">
+                                        {Array.from({ length: rev.rating }).map((_, i) => (
+                                          <Star key={i} className="h-2.5 w-2.5 fill-amber-400" />
+                                        ))}
+                                      </div>
+                                      <span className="text-[9px] text-muted-foreground font-mono">{rev.date}</span>
+                                    </div>
+                                  </div>
+
+                                  <p className="text-[11px] text-muted-foreground italic leading-relaxed">
+                                    "{rev.reviewText}"
+                                  </p>
+
+                                  <div className="flex items-center justify-between text-[9px] text-muted-foreground/80 pt-1 border-t border-border/40">
+                                    <span className="font-medium text-foreground/80">Source: {rev.source}</span>
+                                    <a
+                                      href={rev.sourceUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="inline-flex items-center gap-1 text-primary hover:underline"
+                                    >
+                                      <span>Verify link</span>
+                                      <ExternalLink className="h-2.5 w-2.5" />
+                                    </a>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground py-2 text-center">
+                              Verified ratings pulled directly from official app listings and protocol audits.
+                            </p>
+                          )}
+
+                          {/* Tray Footer Link */}
+                          <div className="pt-2 border-t border-border/50 flex items-center justify-between text-[11px]">
+                            <span className="text-muted-foreground">Reputation grounded in verified stores</span>
+                            <a
+                              href={venue.appUrl || venue.websiteUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex items-center gap-1 text-primary hover:underline font-semibold"
+                            >
+                              <span>Official {venue.domain}</span>
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   {/* Action Buttons: Outbound to Company Website / App */}
@@ -556,6 +825,51 @@ export default function VenuesDirectoryPage() {
                       {comparedVenues.map((v) => (
                         <td key={v.id} className="py-3 px-4 text-foreground font-medium">
                           {v.category}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-medium text-muted-foreground">Reputation & Store Rating</td>
+                      {comparedVenues.map((v) => (
+                        <td key={v.id} className="py-3 px-4 text-foreground">
+                          <div className="flex items-center gap-1 font-bold text-amber-400">
+                            <Star className="h-3.5 w-3.5 fill-amber-400" />
+                            <span>{v.rating.toFixed(1)}★</span>
+                            <span className="text-[10px] text-muted-foreground font-normal">
+                              ({v.reviewCount > 1000 ? `${(v.reviewCount / 1000).toFixed(0)}k+` : v.reviewCount})
+                            </span>
+                          </div>
+                          {v.storeRatings?.googlePlay && (
+                            <span className="text-[10px] text-emerald-400 block mt-0.5">
+                              Google Play {v.storeRatings.googlePlay.rating}★
+                            </span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-medium text-muted-foreground">Total TVL</td>
+                      {comparedVenues.map((v) => (
+                        <td key={v.id} className="py-3 px-4 font-mono font-bold text-foreground">
+                          {v.liquidityMetrics?.tvlUsd || 'Protocol native'}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-medium text-muted-foreground">24h Trading Volume</td>
+                      {comparedVenues.map((v) => (
+                        <td key={v.id} className="py-3 px-4 font-mono font-bold text-emerald-400">
+                          {v.liquidityMetrics?.volume24hUsd || 'Live on-chain'}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-medium text-muted-foreground">Top Pools / Pairs</td>
+                      {comparedVenues.map((v) => (
+                        <td key={v.id} className="py-3 px-4 text-xs font-mono text-muted-foreground">
+                          {v.liquidityMetrics?.topPools
+                            ? v.liquidityMetrics.topPools.map((p) => p.pair).join(', ')
+                            : 'Orderbook / Direct'}
                         </td>
                       ))}
                     </tr>

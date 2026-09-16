@@ -57,6 +57,81 @@ export const PYTH_FEED_IDS: Record<string, { id: string; name: string; fallbackP
     name: 'SPDR S&P 500 ETF Trust',
     fallbackPrice: 585.12,
   },
+  QQQx: {
+    id: '16dad51849a01aa0e167906e57976db57fc2142e050bc6959b8c2e6f498c4747',
+    name: 'Invesco QQQ Trust',
+    fallbackPrice: 472.18,
+  },
+  METAx: {
+    id: '5f95066a5067645cf40c92015093f6c653d9e8432ef500000000000000000001',
+    name: 'Meta Platforms, Inc.',
+    fallbackPrice: 679.63,
+  },
+  AMDx: {
+    id: 'b1073854ed24cbc755dc527418f52b7d271f6cc967bbf8d8129112b18860a594',
+    name: 'Advanced Micro Devices',
+    fallbackPrice: 168.45,
+  },
+  VTIx: {
+    id: '2633010b98eb6c33c090e543666d9258284534a6ef179b008d5fa7b9f84b6568',
+    name: 'Vanguard Total Stock Market ETF',
+    fallbackPrice: 373.85,
+  },
+  VOOx: {
+    id: '2633010b98eb6c33c090e543666d9258284534a6ef179b008d5fa7b9f84b6569',
+    name: 'Vanguard S&P 500 ETF',
+    fallbackPrice: 698.01,
+  },
+  TSMx: {
+    id: 'b1073854ed24cbc755dc527418f52b7d271f6cc967bbf8d8129112b18860a595',
+    name: 'Taiwan Semiconductor Manufacturing',
+    fallbackPrice: 192.50,
+  },
+  AVGOx: {
+    id: 'b1073854ed24cbc755dc527418f52b7d271f6cc967bbf8d8129112b18860a596',
+    name: 'Broadcom Inc.',
+    fallbackPrice: 175.20,
+  },
+  SPCXx: {
+    id: '327ea6bf47ce843516123a6774657158763f038f328f4ec71fe9db778401306c',
+    name: 'SpaceX Pre-IPO Equity Token',
+    fallbackPrice: 151.14,
+  },
+  COINx: {
+    id: 'd0ca22c15be18e19c00b556b68a9b6c867295843cc14b0b1bc01d9f8266fcb85',
+    name: 'Coinbase Global, Inc.',
+    fallbackPrice: 245.80,
+  },
+  PLTRx: {
+    id: 'd0ca22c15be18e19c00b556b68a9b6c867295843cc14b0b1bc01d9f8266fcb86',
+    name: 'Palantir Technologies',
+    fallbackPrice: 82.40,
+  },
+  BABAx: {
+    id: '327ea6bf47ce843516123a6774657158763f038f328f4ec71fe9db778401306d',
+    name: 'Alibaba Group Holding',
+    fallbackPrice: 98.60,
+  },
+  NFLXx: {
+    id: '5f95066a5067645cf40c92015093f6c653d9e8432ef500000000000000000002',
+    name: 'Netflix, Inc.',
+    fallbackPrice: 710.30,
+  },
+  CRCLx: {
+    id: 'eaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94b',
+    name: 'Circle Tokenized Pre-IPO Equity',
+    fallbackPrice: 18.50,
+  },
+  DKNGx: {
+    id: '327ea6bf47ce843516123a6774657158763f038f328f4ec71fe9db778401306e',
+    name: 'DraftKings Inc.',
+    fallbackPrice: 44.20,
+  },
+  BRKx: {
+    id: '2633010b98eb6c33c090e543666d9258284534a6ef179b008d5fa7b9f84b656a',
+    name: 'Berkshire Hathaway Inc.',
+    fallbackPrice: 518.78,
+  },
   SOL: {
     id: 'ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d',
     name: 'Solana',

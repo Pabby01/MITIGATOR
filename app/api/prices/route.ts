@@ -98,8 +98,12 @@ export async function GET() {
     };
   }
 
-  // 2. Fetch or compute live stock prices (NVDA, TSLA, AAPL, MSFT, AMZN, GOOGL, META, SPY)
-  const stockSymbols = ['NVDA', 'TSLA', 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'SPY', 'COIN'];
+  // 2. Fetch or compute live stock prices (NVDA, TSLA, AAPL, MSFT, AMZN, GOOGL, META, SPY, AMD, VTI, VOO, TSM, AVGO, SPCX, COIN, PLTR, BABA, NFLX, CRCL, DKNG, BRK)
+  const stockSymbols = [
+    'NVDA', 'TSLA', 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'SPY',
+    'AMD', 'VTI', 'VOO', 'TSM', 'AVGO', 'SPCX', 'COIN', 'PLTR',
+    'BABA', 'NFLX', 'CRCL', 'DKNG', 'BRK',
+  ];
   
   // Real market baseline values
   const stockBaselines: Record<string, { price: number; prevClose: number }> = {
@@ -112,6 +116,18 @@ export async function GET() {
     META: { price: 504.2, prevClose: 494.8 },
     SPY: { price: 585.12, prevClose: 582.4 },
     COIN: { price: 224.1, prevClose: 229.38 },
+    AMD: { price: 156.4, prevClose: 152.1 },
+    VTI: { price: 278.5, prevClose: 276.9 },
+    VOO: { price: 536.2, prevClose: 533.8 },
+    TSM: { price: 174.6, prevClose: 171.2 },
+    AVGO: { price: 168.9, prevClose: 164.5 },
+    SPCX: { price: 31.4, prevClose: 31.1 },
+    PLTR: { price: 36.8, prevClose: 35.2 },
+    BABA: { price: 88.7, prevClose: 87.1 },
+    NFLX: { price: 698.4, prevClose: 691.0 },
+    CRCL: { price: 14.8, prevClose: 13.9 },
+    DKNG: { price: 42.1, prevClose: 40.8 },
+    BRK: { price: 462.5, prevClose: 460.1 },
   };
 
   for (const sym of stockSymbols) {
@@ -129,6 +145,8 @@ export async function GET() {
 
     // Also populate with 'x' suffix for seamless tokenized asset matching
     results[`${sym}x`] = results[sym];
+    // Populate with '.d' suffix for Dinari dShares matching
+    results[`${sym}.d`] = results[sym];
   }
 
   cachedPrices = { prices: results };
