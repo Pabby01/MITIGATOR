@@ -134,7 +134,7 @@ export default function VenuesDirectoryPage() {
   }, [allVenues, selectedForCompare]);
 
   return (
-    <div className="min-h-screen p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="min-h-screen p-4 md:p-8 pb-16 sm:pb-12 space-y-8 max-w-7xl mx-auto">
       {/* ─── HERO BANNER ─── */}
       <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card/80 via-card/40 to-primary/5 p-6 md:p-10 backdrop-blur-xl shadow-2xl">
         <div className="absolute top-0 right-0 -mt-8 -mr-8 h-64 w-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />

@@ -302,7 +302,7 @@ export default function PaperTradingPage() {
     : 'None (0 Trades)';
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 md:p-6 pb-12 sm:pb-8 max-w-7xl mx-auto space-y-6">
       {/* ─── TITLE & ACTIONS ─── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -565,15 +565,15 @@ export default function PaperTradingPage() {
       {/* ─── UPGRADED PLAYGROUND ORDER MODAL ─── */}
       <AnimatePresence>
         {isTradeModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
             <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              className="w-full max-w-lg bg-card border border-border rounded-3xl shadow-2xl overflow-hidden p-6 space-y-4"
+              initial={{ opacity: 0, scale: 0.96, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 15 }}
+              className="w-full max-w-lg bg-card border border-border rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[88dvh] sm:max-h-[85vh] overflow-hidden my-auto"
             >
-              {/* Header */}
-              <div className="flex items-center justify-between border-b border-border pb-3">
+              {/* Fixed Modal Header */}
+              <div className="flex items-center justify-between border-b border-border px-5 py-4 flex-shrink-0 bg-card/90">
                 <div className="flex items-center gap-2.5">
                   <div className="rounded-xl bg-primary/10 p-2 text-primary">
                     <Zap className="h-5 w-5" />
@@ -584,345 +584,352 @@ export default function PaperTradingPage() {
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setIsTradeModalOpen(false)}
-                  className="rounded-lg p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  className="rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              {formError && (
-                <div className="flex items-center gap-2 p-3 rounded-xl border border-destructive/30 bg-destructive/10 text-xs text-destructive">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                  <span>{formError}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleExecuteTrade} className="space-y-4">
-                {/* Mode Selector: Virtual Paper vs Live Devnet Wallet */}
-                <div className="grid grid-cols-2 gap-1 rounded-xl bg-background/80 border border-border p-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setExecutionTarget('paper');
-                      setOnchainSuccessTx(null);
-                    }}
-                    className={cn(
-                      'py-1.5 text-xs font-bold rounded-lg transition-all',
-                      executionTarget === 'paper'
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    Virtual Paper ($100k)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setExecutionTarget('onchain');
-                      setOnchainSuccessTx(null);
-                    }}
-                    className={cn(
-                      'py-1.5 text-xs font-bold rounded-lg transition-all',
-                      executionTarget === 'onchain'
-                        ? 'bg-emerald-500 text-white shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    )}
-                  >
-                    Live Devnet Wallet
-                  </button>
-                </div>
-
-                {onchainSuccessTx && (
-                  <div className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-xs space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>Trade Confirmed on Solana Devnet!</span>
+              {/* Form with Scrollable Body & Sticky Action Footer */}
+              <form onSubmit={handleExecuteTrade} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 scrollbar-thin touch-pan-y">
+                  {formError && (
+                    <div className="flex items-center gap-2 p-3 rounded-xl border border-destructive/30 bg-destructive/10 text-xs text-destructive">
+                      <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                      <span>{formError}</span>
                     </div>
-                    <p className="text-muted-foreground text-[11px]">
-                      Signature: <span className="font-mono text-foreground">{onchainSuccessTx.signature.slice(0, 8)}...{onchainSuccessTx.signature.slice(-6)}</span>
-                    </p>
-                    <a
-                      href={onchainSuccessTx.explorerUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-primary hover:underline font-mono text-[11px] flex items-center gap-1"
+                  )}
+
+                  {/* Mode Selector: Virtual Paper vs Live Devnet Wallet */}
+                  <div className="grid grid-cols-2 gap-1 rounded-xl bg-background/80 border border-border p-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExecutionTarget('paper');
+                        setOnchainSuccessTx(null);
+                      }}
+                      className={cn(
+                        'py-2 text-xs font-bold rounded-lg transition-all cursor-pointer',
+                        executionTarget === 'paper'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
                     >
-                      <span>View on Solana Explorer</span>
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
+                      Virtual Paper ($100k)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExecutionTarget('onchain');
+                        setOnchainSuccessTx(null);
+                      }}
+                      className={cn(
+                        'py-2 text-xs font-bold rounded-lg transition-all cursor-pointer',
+                        executionTarget === 'onchain'
+                          ? 'bg-emerald-500 text-white shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      )}
+                    >
+                      Live Devnet Wallet
+                    </button>
                   </div>
-                )}
-                {/* 1. Asset Selector & Live Pyth Price */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground">Select Stock Asset</label>
-                    <span className="text-xs font-mono text-cyan-400 flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                      Pyth: ${livePriceEstimate.toFixed(2)}
-                    </span>
-                  </div>
-                  <select
-                    value={tradeSymbol}
-                    onChange={(e) => setTradeSymbol(e.target.value)}
-                    className="w-full rounded-xl bg-background/80 border border-border px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary font-medium"
-                  >
-                    {assets.map((a) => (
-                      <option key={a.tokenizedAsset.symbol} value={a.tokenizedAsset.symbol}>
-                        {a.tokenizedAsset.symbol} — {a.tokenizedAsset.name} (${(a.quote?.price || 100).toFixed(2)})
-                      </option>
-                    ))}
-                  </select>
-                </div>
 
-                {/* 2. Order Side & Order Type */}
-                <div className="grid grid-cols-2 gap-3">
+                  {onchainSuccessTx && (
+                    <div className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-xs space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <span>Trade Confirmed on Solana Devnet!</span>
+                      </div>
+                      <p className="text-muted-foreground text-[11px]">
+                        Signature: <span className="font-mono text-foreground">{onchainSuccessTx.signature.slice(0, 8)}...{onchainSuccessTx.signature.slice(-6)}</span>
+                      </p>
+                      <a
+                        href={onchainSuccessTx.explorerUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary hover:underline font-mono text-[11px] flex items-center gap-1"
+                      >
+                        <span>View on Solana Explorer</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                  )}
+
+                  {/* 1. Asset Selector & Live Pyth Price */}
                   <div>
-                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Direction</label>
-                    <div className="grid grid-cols-2 gap-1 rounded-xl bg-background/80 border border-border p-1">
-                      <button
-                        type="button"
-                        onClick={() => setTradeSide('buy')}
-                        className={cn(
-                          'py-1.5 text-xs font-bold rounded-lg transition-all',
-                          tradeSide === 'buy' ? 'bg-emerald-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                        )}
-                      >
-                        Buy (Long)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setTradeSide('sell')}
-                        className={cn(
-                          'py-1.5 text-xs font-bold rounded-lg transition-all',
-                          tradeSide === 'sell' ? 'bg-red-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                        )}
-                      >
-                        Sell (Short)
-                      </button>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground">Select Stock Asset</label>
+                      <span className="text-xs font-mono text-cyan-400 flex items-center gap-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                        Pyth: ${livePriceEstimate.toFixed(2)}
+                      </span>
                     </div>
+                    <select
+                      value={tradeSymbol}
+                      onChange={(e) => setTradeSymbol(e.target.value)}
+                      className="w-full rounded-xl bg-background/80 border border-border px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary font-medium"
+                    >
+                      {assets.map((a) => (
+                        <option key={a.tokenizedAsset.symbol} value={a.tokenizedAsset.symbol}>
+                          {a.tokenizedAsset.symbol} — {a.tokenizedAsset.name} (${(a.quote?.price || 100).toFixed(2)})
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Execution Mode</label>
-                    <div className="grid grid-cols-2 gap-1 rounded-xl bg-background/80 border border-border p-1">
-                      <button
-                        type="button"
-                        onClick={() => setOrderType('market')}
-                        className={cn(
-                          'py-1.5 text-xs font-semibold rounded-lg transition-all',
-                          orderType === 'market' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                        )}
-                      >
-                        Market (Swap)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setOrderType('limit')}
-                        className={cn(
-                          'py-1.5 text-xs font-semibold rounded-lg transition-all',
-                          orderType === 'limit' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-                        )}
-                      >
-                        Limit Order
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Limit Price (if Limit Order selected) */}
-                {orderType === 'limit' && (
-                  <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <label className="font-semibold text-foreground">Target Limit Price (USD)</label>
-                      <button
-                        type="button"
-                        onClick={() => setLimitPrice((livePriceEstimate * 0.98).toFixed(2))}
-                        className="text-[10px] text-primary underline"
-                      >
-                        Set 2% Dip (${(livePriceEstimate * 0.98).toFixed(2)})
-                      </button>
-                    </div>
-                    <div className="relative">
-                      <span className="absolute left-3 top-2.5 text-sm text-muted-foreground font-mono">$</span>
-                      <input
-                        type="number"
-                        step="any"
-                        value={limitPrice}
-                        onChange={(e) => setLimitPrice(e.target.value)}
-                        className="w-full rounded-xl bg-background/90 border border-border pl-7 pr-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary font-mono"
-                        placeholder="Limit price"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* 4. Sizing Input: USD vs Shares (No Step Restrictions!) */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs font-semibold text-muted-foreground">Order Sizing</label>
-                      <div className="inline-flex rounded-md bg-muted/60 p-0.5 text-[10px]">
+                  {/* 2. Order Side & Order Type */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Direction</label>
+                      <div className="grid grid-cols-2 gap-1 rounded-xl bg-background/80 border border-border p-1">
                         <button
                           type="button"
-                          onClick={() => setInputMode('usd')}
+                          onClick={() => setTradeSide('buy')}
                           className={cn(
-                            'px-2 py-0.5 rounded font-medium transition-colors',
-                            inputMode === 'usd' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground'
+                            'py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer',
+                            tradeSide === 'buy' ? 'bg-emerald-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'
                           )}
                         >
-                          USD ($)
+                          Buy (Long)
                         </button>
                         <button
                           type="button"
-                          onClick={() => setInputMode('shares')}
+                          onClick={() => setTradeSide('sell')}
                           className={cn(
-                            'px-2 py-0.5 rounded font-medium transition-colors',
-                            inputMode === 'shares' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground'
+                            'py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer',
+                            tradeSide === 'sell' ? 'bg-red-500 text-white shadow-sm' : 'text-muted-foreground hover:text-foreground'
                           )}
                         >
-                          Shares ({tradeSymbol})
+                          Sell (Short)
                         </button>
                       </div>
                     </div>
-                    <span className="text-[11px] text-muted-foreground font-mono">
-                      Cash: ${balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                    </span>
+
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-1">Execution Mode</label>
+                      <div className="grid grid-cols-2 gap-1 rounded-xl bg-background/80 border border-border p-1">
+                        <button
+                          type="button"
+                          onClick={() => setOrderType('market')}
+                          className={cn(
+                            'py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer',
+                            orderType === 'market' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                          )}
+                        >
+                          Market (Swap)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOrderType('limit')}
+                          className={cn(
+                            'py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer',
+                            orderType === 'limit' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                          )}
+                        >
+                          Limit Order
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="relative">
-                    {inputMode === 'usd' ? (
-                      <>
-                        <span className="absolute left-3.5 top-2.5 text-sm text-muted-foreground font-mono font-bold">$</span>
+                  {/* 3. Limit Price (if Limit Order selected) */}
+                  {orderType === 'limit' && (
+                    <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <label className="font-semibold text-foreground">Target Limit Price (USD)</label>
+                        <button
+                          type="button"
+                          onClick={() => setLimitPrice((livePriceEstimate * 0.98).toFixed(2))}
+                          className="text-[10px] text-primary underline cursor-pointer"
+                        >
+                          Set 2% Dip (${(livePriceEstimate * 0.98).toFixed(2)})
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5 text-sm text-muted-foreground font-mono">$</span>
                         <input
                           type="number"
                           step="any"
-                          value={tradeAmountUsd}
-                          onChange={(e) => setTradeAmountUsd(e.target.value)}
-                          placeholder="450"
-                          className="w-full rounded-xl bg-background/80 border border-border pl-8 pr-24 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary font-mono font-semibold"
+                          value={limitPrice}
+                          onChange={(e) => setLimitPrice(e.target.value)}
+                          className="w-full rounded-xl bg-background/90 border border-border pl-7 pr-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary font-mono"
+                          placeholder="Limit price"
                         />
-                        <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-mono">
-                          ≈ {calculatedShareQuantity.toFixed(3)} shares
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <input
-                          type="number"
-                          step="any"
-                          value={tradeShares}
-                          onChange={(e) => setTradeShares(e.target.value)}
-                          placeholder="2"
-                          className="w-full rounded-xl bg-background/80 border border-border px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary font-mono font-semibold"
-                        />
-                        <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-mono">
-                          ≈ ${calculatedUsdAmount.toFixed(2)} USD
-                        </span>
-                      </>
-                    )}
-                  </div>
+                      </div>
+                    </div>
+                  )}
 
-                  {/* Sizing Quick Presets */}
-                  <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mr-1">Quick:</span>
-                    {['100', '250', '450', '1000', '2500'].map((preset) => (
+                  {/* 4. Sizing Input: USD vs Shares */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs font-semibold text-muted-foreground">Order Sizing</label>
+                        <div className="inline-flex rounded-md bg-muted/60 p-0.5 text-[10px]">
+                          <button
+                            type="button"
+                            onClick={() => setInputMode('usd')}
+                            className={cn(
+                              'px-2 py-0.5 rounded font-medium transition-colors cursor-pointer',
+                              inputMode === 'usd' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground'
+                            )}
+                          >
+                            USD ($)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setInputMode('shares')}
+                            className={cn(
+                              'px-2 py-0.5 rounded font-medium transition-colors cursor-pointer',
+                              inputMode === 'shares' ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground'
+                            )}
+                          >
+                            Shares ({tradeSymbol})
+                          </button>
+                        </div>
+                      </div>
+                      <span className="text-[11px] text-muted-foreground font-mono">
+                        Cash: ${balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </span>
+                    </div>
+
+                    <div className="relative">
+                      {inputMode === 'usd' ? (
+                        <>
+                          <span className="absolute left-3.5 top-2.5 text-sm text-muted-foreground font-mono font-bold">$</span>
+                          <input
+                            type="number"
+                            step="any"
+                            value={tradeAmountUsd}
+                            onChange={(e) => setTradeAmountUsd(e.target.value)}
+                            placeholder="450"
+                            className="w-full rounded-xl bg-background/80 border border-border pl-8 pr-24 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary font-mono font-semibold"
+                          />
+                          <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-mono">
+                            ≈ {calculatedShareQuantity.toFixed(3)} shares
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <input
+                            type="number"
+                            step="any"
+                            value={tradeShares}
+                            onChange={(e) => setTradeShares(e.target.value)}
+                            placeholder="2"
+                            className="w-full rounded-xl bg-background/80 border border-border px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:border-primary font-mono font-semibold"
+                          />
+                          <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-mono">
+                            ≈ ${calculatedUsdAmount.toFixed(2)} USD
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Sizing Quick Presets */}
+                    <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mr-1">Quick:</span>
+                      {['100', '250', '450', '1000', '2500'].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => {
+                            setInputMode('usd');
+                            setTradeAmountUsd(preset);
+                          }}
+                          className={cn(
+                            'px-2 py-0.5 rounded-lg text-[11px] font-mono border transition-all cursor-pointer',
+                            tradeAmountUsd === preset && inputMode === 'usd'
+                              ? 'bg-primary/20 border-primary text-primary font-semibold'
+                              : 'bg-muted/40 border-border/70 text-muted-foreground hover:text-foreground'
+                          )}
+                        >
+                          ${preset}
+                        </button>
+                      ))}
                       <button
-                        key={preset}
                         type="button"
                         onClick={() => {
                           setInputMode('usd');
-                          setTradeAmountUsd(preset);
+                          setTradeAmountUsd((balance * 0.25).toFixed(0));
                         }}
-                        className={cn(
-                          'px-2 py-0.5 rounded-lg text-[11px] font-mono border transition-all',
-                          tradeAmountUsd === preset && inputMode === 'usd'
-                            ? 'bg-primary/20 border-primary text-primary font-semibold'
-                            : 'bg-muted/40 border-border/70 text-muted-foreground hover:text-foreground'
-                        )}
+                        className="px-2 py-0.5 rounded-lg text-[11px] font-mono bg-muted/40 border border-border/70 text-muted-foreground hover:text-foreground cursor-pointer"
                       >
-                        ${preset}
+                        25%
                       </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setInputMode('usd');
-                        setTradeAmountUsd((balance * 0.25).toFixed(0));
-                      }}
-                      className="px-2 py-0.5 rounded-lg text-[11px] font-mono bg-muted/40 border border-border/70 text-muted-foreground hover:text-foreground"
-                    >
-                      25%
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setInputMode('usd');
-                        setTradeAmountUsd((balance * 0.5).toFixed(0));
-                      }}
-                      className="px-2 py-0.5 rounded-lg text-[11px] font-mono bg-muted/40 border border-border/70 text-muted-foreground hover:text-foreground"
-                    >
-                      50%
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setInputMode('usd');
-                        setTradeAmountUsd(balance.toFixed(0));
-                      }}
-                      className="px-2 py-0.5 rounded-lg text-[11px] font-mono bg-primary/10 border border-primary/30 text-primary font-semibold hover:bg-primary/20"
-                    >
-                      Max
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInputMode('usd');
+                          setTradeAmountUsd((balance * 0.5).toFixed(0));
+                        }}
+                        className="px-2 py-0.5 rounded-lg text-[11px] font-mono bg-muted/40 border border-border/70 text-muted-foreground hover:text-foreground cursor-pointer"
+                      >
+                        50%
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInputMode('usd');
+                          setTradeAmountUsd(balance.toFixed(0));
+                        }}
+                        className="px-2 py-0.5 rounded-lg text-[11px] font-mono bg-primary/10 border border-primary/30 text-primary font-semibold hover:bg-primary/20 cursor-pointer"
+                      >
+                        Max
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 5. Live Execution Breakdown */}
+                  <div className="rounded-2xl border border-border/80 bg-card/60 p-3.5 space-y-1.5 text-xs font-mono">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Target Shares:</span>
+                      <span className="text-foreground font-bold">{calculatedShareQuantity.toFixed(4)} {tradeSymbol}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Estimated Total:</span>
+                      <span className="text-foreground font-bold">${calculatedUsdAmount.toFixed(2)} USD</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Routing Protocol:</span>
+                      <span className="text-foreground">Jupiter v6 → Raydium/Meteora DLMM</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Simulated Gas Fee:</span>
+                      <span className="text-emerald-400">~0.000005 SOL (&lt;$0.001)</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Slippage Cap:</span>
+                      <span className="text-cyan-400">{slippageTolerance}% Dynamic</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* 5. Live Execution Breakdown */}
-                <div className="rounded-2xl border border-border/80 bg-card/60 p-3.5 space-y-1.5 text-xs font-mono">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Target Shares:</span>
-                    <span className="text-foreground font-bold">{calculatedShareQuantity.toFixed(4)} {tradeSymbol}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Estimated Total:</span>
-                    <span className="text-foreground font-bold">${calculatedUsdAmount.toFixed(2)} USD</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Routing Protocol:</span>
-                    <span className="text-foreground">Jupiter v6 → Raydium/Meteora DLMM</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Simulated Gas Fee:</span>
-                    <span className="text-emerald-400">~0.000005 SOL (&lt;$0.001)</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Slippage Cap:</span>
-                    <span className="text-cyan-400">{slippageTolerance}% Dynamic</span>
-                  </div>
+                {/* Sticky Pinned Bottom Action Footer */}
+                <div className="p-4 sm:p-5 border-t border-border bg-card/95 backdrop-blur-md flex-shrink-0">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || calculatedUsdAmount <= 0}
+                    className={cn(
+                      "w-full py-3.5 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 active:scale-98 text-white cursor-pointer",
+                      executionTarget === 'onchain' ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20" : "bg-primary hover:bg-primary/90 shadow-primary/20"
+                    )}
+                  >
+                    {isSubmitting ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {executionTarget === 'onchain' ? 'Awaiting Wallet Approval in Solflare...' : 'Executing against Pyth Oracle...'}
+                      </span>
+                    ) : executionTarget === 'onchain' ? (
+                      connected
+                        ? `Sign & Swap on Solana Devnet (${calculatedShareQuantity.toFixed(2)} shares)`
+                        : 'Connect Wallet to Trade Devnet Tokens'
+                    ) : (
+                      `Simulate ${tradeSide.toUpperCase()} ${tradeSymbol} (${calculatedShareQuantity.toFixed(2)} shares)`
+                    )}
+                  </button>
                 </div>
-
-                {/* Submit Action */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting || calculatedUsdAmount <= 0}
-                  className={cn(
-                    "w-full py-3 rounded-xl font-bold text-sm shadow-md transition-all disabled:opacity-50 active:scale-98 text-white",
-                    executionTarget === 'onchain' ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20" : "bg-primary hover:bg-primary/90 shadow-primary/20"
-                  )}
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {executionTarget === 'onchain' ? 'Awaiting Wallet Approval in Solflare...' : 'Executing against Pyth Oracle...'}
-                    </span>
-                  ) : executionTarget === 'onchain' ? (
-                    connected
-                      ? `Sign & Swap on Solana Devnet (${calculatedShareQuantity.toFixed(2)} shares)`
-                      : 'Connect Wallet to Trade Devnet Tokens'
-                  ) : (
-                    `Simulate ${tradeSide.toUpperCase()} ${tradeSymbol} (${calculatedShareQuantity.toFixed(2)} shares)`
-                  )}
-                </button>
               </form>
             </motion.div>
           </div>
@@ -930,12 +937,12 @@ export default function PaperTradingPage() {
 
         {/* Reset Confirmation Modal */}
         {isResetConfirmOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md rounded-2xl hairline-card p-6 bg-card shadow-2xl border border-destructive/40 space-y-4"
+              className="w-full max-w-md rounded-2xl hairline-card p-6 bg-card shadow-2xl border border-destructive/40 space-y-4 max-h-[90dvh] overflow-y-auto my-auto"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-destructive">

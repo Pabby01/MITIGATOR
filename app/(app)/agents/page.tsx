@@ -448,14 +448,14 @@ export default function AgentsPage() {
       {/* Raw Telemetry Inspector Modal */}
       <AnimatePresence>
         {inspectedAgent && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-sm overflow-y-auto">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-lg"
+              className="w-full max-w-lg max-h-[90dvh] my-auto overflow-hidden flex flex-col"
             >
-              <GlassPanel className="p-6 border-border shadow-2xl space-y-4">
+              <GlassPanel className="p-5 sm:p-6 border-border shadow-2xl space-y-4 max-h-[90dvh] overflow-y-auto scrollbar-thin">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="p-2 rounded-lg bg-primary/10 text-primary">

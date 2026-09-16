@@ -299,11 +299,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Content viewport: with mobile bottom bar padding (pb-24 on mobile, pb-0 on md+) */}
-        <main className="flex-1 overflow-y-auto scrollbar-thin relative pb-24 md:pb-0">
+        {/* Content viewport: with generous mobile bottom bar clearance (pb-32 sm:pb-36 md:pb-8) */}
+        <main className="flex-1 overflow-y-auto scrollbar-thin relative pb-32 sm:pb-36 md:pb-8">
           <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
           <div className="absolute bottom-10 left-10 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
-          <div className="relative z-0">
+          <div className="relative min-h-full">
             {children}
           </div>
         </main>
@@ -355,7 +355,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -365,9 +365,9 @@ function WalletModal({ onClose }: { onClose: () => void }) {
       />
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="relative w-full max-w-md hairline-card rounded-2xl p-6 shadow-2xl space-y-5"
+        className="relative w-full max-w-md hairline-card rounded-2xl p-5 sm:p-6 shadow-2xl space-y-5 max-h-[90dvh] overflow-y-auto scrollbar-thin my-auto"
       >
         <div className="flex items-center justify-between border-b border-border/50 pb-4">
           <div className="flex items-center gap-2.5">

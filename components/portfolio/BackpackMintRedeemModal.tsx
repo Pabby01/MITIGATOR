@@ -102,12 +102,12 @@ export function BackpackMintRedeemModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-md">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-md overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="relative w-full max-w-xl max-h-[90vh] flex flex-col rounded-2xl hairline-card bg-card shadow-2xl border border-border overflow-hidden"
+        className="relative w-full max-w-xl max-h-[90dvh] flex flex-col rounded-2xl hairline-card bg-card shadow-2xl border border-border overflow-hidden my-auto"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/80 bg-card/60">
