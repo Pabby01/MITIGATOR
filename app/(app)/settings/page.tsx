@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { ShieldCheck, Wallet, Bell, Eye, Zap, Globe, Sun, Moon, User } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
+import { PageTipSection } from '@/components/shared/PageTipSection';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { getUserProfile, saveUserProfile, UserProfile } from '@/lib/services/user-profile';
 import { isSupabaseConfigured } from '@/lib/services/supabase';
@@ -63,6 +64,35 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground mt-0.5">Preferences, display, and safety configuration</p>
       </div>
+
+      {/* Interactive Guide & Defense Section */}
+      <PageTipSection
+        pageTitle="Platform Settings & Trading Guardrails"
+        subtitle="How personal risk limits, cluster switching, and client-side preferences operate"
+        badge="System Config"
+        storageKey="settings"
+        tips={[
+          {
+            title: 'Personal Risk Thresholds',
+            description:
+              'Define strict account-level rules: maximum individual order size in USD, maximum acceptable slippage cap, and investment risk profile (Conservative, Balanced, Aggressive).',
+            badge: 'Policy Enforcement',
+          },
+          {
+            title: 'Solana Devnet / Mainnet Environment',
+            description:
+              'Switch effortlessly between Solana Devnet (for zero-risk testing with simulated tokens) and Mainnet-Beta (for live institutional settlement).',
+            badge: 'Cluster Switcher',
+          },
+          {
+            title: 'Non-Custodial Persistence',
+            description:
+              'Settings and watchlist preferences are saved locally and synced with optional Supabase persistence tied directly to your cryptographic wallet address.',
+            badge: 'Sovereign Identity',
+          },
+        ]}
+        hackathonDefense="Security starts at the edge. MITIGATOR enforces user-configured maximum order limits and slippage bounds directly within the client before transactions are constructed, guaranteeing users cannot inadvertently exceed their personal risk tolerances."
+      />
 
       {/* Wallet */}
       <GlassPanel className="p-5">

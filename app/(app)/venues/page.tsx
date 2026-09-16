@@ -24,6 +24,7 @@ import {
   Info,
 } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
+import { PageTipSection } from '@/components/shared/PageTipSection';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import {
   getAllVenues,
@@ -168,6 +169,38 @@ export default function VenuesDirectoryPage() {
           </div>
         </div>
       </div>
+
+      {/* ─── COLLAPSIBLE DIRECTORY GUIDE ─── */}
+      <PageTipSection
+        pageTitle="Venues Directory & Rate Comparator"
+        subtitle="How to compare platforms, deposit rails, regulatory licensing, and fee structures"
+        badge="Directory Guide"
+        defaultOpen={false}
+        storageKey="venues_directory"
+        tips={[
+          {
+            title: 'Nigerian On-Ramps & Tokenization',
+            description: 'Platforms like NectarFi, Roqqu, GetEquity, Busha, and Quidax provide instant Naira (NGN) bank transfers, SEC Nigeria compliance, and direct access to tokenized African assets like the Dangote Refinery.',
+            badge: 'Nigeria Rails',
+          },
+          {
+            title: 'Global Regulated Tokenized Equities',
+            description: 'Backpack Exchange (VARA Dubai), Dinari dShares (US SEC Transfer Agent), and Backed Finance (Swiss DLT FINMA) issue 1:1 backed tokens holding actual physical shares with private bank custodians.',
+            badge: 'Global RWA',
+          },
+          {
+            title: 'Solana High-Speed Settlement',
+            description: 'All listed venues settle on Solana within ~400ms using SPL and Token-2022 standards, eliminating traditional 2-day settlement clearinghouse delays.',
+            badge: 'T+0 Finality',
+          },
+          {
+            title: 'Side-by-Side Comparator',
+            description: 'Click "Compare" on up to 3 platforms to evaluate Trading Fees, KYC tiers, Deposit costs, and supported equities side-by-side in a single window.',
+            badge: 'Comparator',
+          },
+        ]}
+        hackathonDefense="This directory aggregates the entire Solana stock and RWA ecosystem across Africa, Europe, the Americas, and global DeFi, proving that Solana provides cross-border capital rails connecting emerging markets to Wall Street securities."
+      />
 
       {/* ─── CONTROLS: SEARCH & FILTERS ─── */}
       <div className="space-y-4">

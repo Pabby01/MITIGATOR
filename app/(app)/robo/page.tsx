@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { RiskBadge } from '@/components/shared/SourceBadge';
+import { PageTipSection } from '@/components/shared/PageTipSection';
 import { getRoboProfiles } from '@/lib/mock-data';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
@@ -117,6 +118,35 @@ export default function RoboPage() {
           </span>
         </div>
       </div>
+
+      {/* Interactive Guide & Defense Section */}
+      <PageTipSection
+        pageTitle="Robo Advisor & Automated Rebalancer"
+        subtitle="How algorithmic portfolio construction, fiduciary guardrails, and automated rebalancing operate"
+        badge="Autonomous Allocation"
+        storageKey="robo_advisor"
+        tips={[
+          {
+            title: 'Algorithmic Portfolio Construction',
+            description:
+              'Select from pre-configured institutional asset mixes (Conservative Shield, Balanced Alpha, High-Beta Tech, Dividend Fortress) to achieve optimal Modern Portfolio Theory (MPT) diversification.',
+            badge: 'MPT Sizing',
+          },
+          {
+            title: 'Programmable Pre-Trade Guardrails',
+            description:
+              'Enforce strict maximum position sizing (e.g. 25%), daily loss cutoffs, slippage limits, and minimum AI confidence scores before any trade can be dispatched.',
+            badge: 'Risk Guardrails',
+          },
+          {
+            title: '1-Click Paper Deployment & Auto-Rebalancing',
+            description:
+              'Instantly deploy any target portfolio into your virtual Paper Trading environment to observe automated rebalancing and tranche DCA as live Pyth prices move.',
+            badge: 'Simulation Sandbox',
+          },
+        ]}
+        hackathonDefense="Automated trading bots in crypto often fail due to unbounded slippage and flash crashes. MITIGATOR's Robo Advisor combines Modern Portfolio Theory with programmable circuit breakers, ensuring portfolios maintain target risk parameters without risking liquidation."
+      />
 
       {/* Safety Status Banner */}
       <div

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { SourceBadge, FreshnessBadge } from '@/components/shared/SourceBadge';
+import { PageTipSection } from '@/components/shared/PageTipSection';
 import { getAllAssets } from '@/lib/mock-data';
 import { ProvenanceRecord } from '@/lib/services/provenance-service';
 import { cn } from '@/lib/utils';
@@ -69,6 +70,35 @@ export default function ProvenancePage() {
           </span>
         </div>
       </div>
+
+      {/* Interactive Guide & Defense Section */}
+      <PageTipSection
+        pageTitle="Data Provenance & Trust Layer"
+        subtitle="How source verification, cryptographic content hashing, and audit trails ensure truth"
+        badge="Zero-Trust Architecture"
+        storageKey="provenance"
+        tips={[
+          {
+            title: '6-Tier Source Verification Hierarchy',
+            description:
+              'Classifies all data feeds into explicit certainty tiers: CANONICAL (SEC EDGAR & smart contract state), PRIMARY (Pyth Hermes oracles), VERIFIED (audited custody reports), down to UNCONFIRMED.',
+            badge: 'Tiered Hierarchy',
+          },
+          {
+            title: 'Cryptographic SHA-256 Content Fingerprinting',
+            description:
+              'Computes immutable hash digests for every raw financial statement, oracle update, and model inference so past states cannot be silently altered or repudiated.',
+            badge: 'SHA-256 Hashes',
+          },
+          {
+            title: 'Regulatory & Institutional Auditability',
+            description:
+              'Enables compliance teams, auditors, and investors to inspect complete lineage records proving exactly what data triggered any risk score or execution decision.',
+            badge: 'Regulatory Audit',
+          },
+        ]}
+        hackathonDefense="Decentralized finance is flooded with unverified data, oracle exploits, and hallucinating LLMs. MITIGATOR's Provenance Layer establishes cryptographic zero-trust integrity, verifying that every trade signal originated from an authenticated, unmanipulated primary source."
+      />
 
       {/* Asset Selector */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs bg-card/40 border border-border p-2 rounded-xl">

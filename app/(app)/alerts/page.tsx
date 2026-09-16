@@ -18,6 +18,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
+import { PageTipSection } from '@/components/shared/PageTipSection';
 import { getAllAssets } from '@/lib/mock-data';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { UserAlert } from '@/lib/services/alerts-service';
@@ -188,6 +189,35 @@ export default function AlertsPage() {
           <span>New Alert</span>
         </button>
       </div>
+
+      {/* Interactive Guide & Defense Section */}
+      <PageTipSection
+        pageTitle="Alerts & Real-Time Surveillance"
+        subtitle="How price triggers, depeg alerts, risk score deterioration, and liquidity shocks are monitored"
+        badge="Surveillance Sentinel"
+        storageKey="alerts"
+        tips={[
+          {
+            title: '4 Distinct Trigger Classifications',
+            description:
+              'Set alerts on exact USD price targets, MITIGATOR risk score deterioration thresholds, Token-2022 peg divergence percentages, and AMM pool liquidity drops.',
+            badge: 'Multi-Trigger',
+          },
+          {
+            title: 'Sub-Second Pyth Oracle Evaluation',
+            description:
+              'Monitored continuously against high-frequency Pyth Hermes price feeds, catching flash volatility and depeg events within milliseconds.',
+            badge: 'Sub-Second',
+          },
+          {
+            title: 'Actionable Threat Mitigation',
+            description:
+              'Each alert notification includes direct 1-click links to run deep AI risk audits, inspect the order routing book, or hedge positions in the execution router.',
+            badge: 'Rapid Response',
+          },
+        ]}
+        hackathonDefense="Stock tokenization introduces unique failure modes—such as synthetic peg depegging or issuer insolvency—that standard crypto price bots ignore. MITIGATOR's surveillance engine tracks both price and structural health in real time."
+      />
 
       {/* Create Alert Form */}
       <AnimatePresence>

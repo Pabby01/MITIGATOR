@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { GlassPanel, PriceChange } from '@/components/shared/GlassPanel';
 import { RiskBadge } from '@/components/shared/SourceBadge';
+import { PageTipSection } from '@/components/shared/PageTipSection';
 import { getAllAssets } from '@/lib/mock-data';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
@@ -121,6 +122,35 @@ export default function MarketDiscoveryPage() {
           </span>
         </div>
       </div>
+
+      {/* Interactive Guide & Defense Section */}
+      <PageTipSection
+        pageTitle="Tokenized Equities Market Discovery"
+        subtitle="How multi-issuer tokenized stocks, Pyth price feeds, and sector clustering work"
+        badge="Market Intelligence"
+        storageKey="markets"
+        tips={[
+          {
+            title: 'Multi-Issuer Canonical Mapping',
+            description:
+              'Indexes wrapped stock variants from multiple issuers (e.g. xStocks, Dinari dShares, Backed bTokens) and aggregates them by underlying equity ticker so you can compare liquidity and pricing.',
+            badge: 'Tokens.xyz Protocol',
+          },
+          {
+            title: 'Sub-Second Pyth Hermes Pricing',
+            description:
+              'Pulls live pricing updates directly from the Pyth Network oracles on Solana Devnet/Mainnet with 24-hour delta tracking, confidence intervals, and volume metrics.',
+            badge: '400ms Latency',
+          },
+          {
+            title: 'Tri-Mode Visualization (Cards, Table, 3D WebGL)',
+            description:
+              'Switch effortlessly between a card catalog for quick browsing, a financial table for quantitative metrics, and a 3D WebGL cosmic galaxy showing sector risk clustering.',
+            badge: 'WebGL 3D',
+          },
+        ]}
+        hackathonDefense="Because tokenized equities are minted across different issuers with incompatible standards, buyers face liquidity fragmentation and price discrepancies. MITIGATOR solves this by acting as the discovery and intelligence aggregator across all Solana stock markets."
+      />
 
       {/* Controls */}
       <div className="flex flex-col md:flex-row gap-3">

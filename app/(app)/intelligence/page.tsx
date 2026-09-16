@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { SourceBadge } from '@/components/shared/SourceBadge';
+import { PageTipSection } from '@/components/shared/PageTipSection';
 import { getAllAssets } from '@/lib/mock-data';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
 import { RiskFactorDetail } from '@/lib/services/risk-engine';
@@ -222,6 +223,35 @@ export default function IntelligencePage() {
           </div>
         </div>
       </div>
+
+      {/* Interactive Guide & Defense Section */}
+      <PageTipSection
+        pageTitle="AI Intelligence & Synthesis Terminal"
+        subtitle="How SEC EDGAR regulatory filings, news sentiment, and on-chain telemetry are synthesized"
+        badge="Multi-Source RAG"
+        storageKey="intelligence"
+        tips={[
+          {
+            title: 'Tier-1 SEC EDGAR Ingestion',
+            description:
+              'Directly ingests 10-K (annual reports), 10-Q (quarterly filings), and 8-K (material event disclosures) to detect executive insider selling, legal liabilities, or revenue warnings.',
+            badge: 'Regulatory Grounding',
+          },
+          {
+            title: 'Live On-Chain Telemetry Merging',
+            description:
+              'Combines Pyth Hermes streaming oracle latency, Solana cluster TPS, and Jupiter v6 route liquidity depth with off-chain fundamental analysis for complete trade viability.',
+            badge: 'On-Chain Fusion',
+          },
+          {
+            title: 'Audit Trail & Citation Verification',
+            description:
+              'Every AI verdict includes verifiable source citations, confidence intervals, and breakdown factors to prevent hallucinations and support institutional due diligence.',
+            badge: 'Zero Hallucination',
+          },
+        ]}
+        hackathonDefense="While standard AI chatbots offer generic or outdated stock commentary, MITIGATOR's Intelligence Terminal grounds every recommendation in legally-binding SEC regulatory filings, real-time Pyth oracles, and live DEX liquidity depth, ensuring actionable risk insights."
+      />
 
       {/* Quick Asset Filter Pills */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">

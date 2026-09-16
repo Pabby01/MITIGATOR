@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { SourceBadge } from '@/components/shared/SourceBadge';
+import { PageTipSection } from '@/components/shared/PageTipSection';
 import { getAllAssets } from '@/lib/mock-data';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { CommunityPost } from '@/lib/services/community-service';
@@ -301,6 +302,35 @@ export default function CommunityPage() {
           </span>
         </div>
       </div>
+
+      {/* Interactive Guide & Defense Section */}
+      <PageTipSection
+        pageTitle="Community Sentiment & Trade Ideas"
+        subtitle="How decentralized signals, NLP sentiment consensus, and peer-reviewed theses work"
+        badge="Social Consensus"
+        storageKey="community"
+        tips={[
+          {
+            title: 'Crowdsourced Investment Theses',
+            description:
+              'Share and review stock theses with structured tags (Trade Idea, Analysis, Question) and verifiable sentiment tags (Bullish, Bearish, Neutral).',
+            badge: 'Peer Reviewed',
+          },
+          {
+            title: 'NLP Sentiment Aggregation',
+            description:
+              'The system runs natural language processing on user posts to quantify overall community consensus, feeding directly into the social sentiment vector of the risk engine.',
+            badge: 'NLP Engine',
+          },
+          {
+            title: 'Wallet-Authenticated Authorship',
+            description:
+              'Posts, replies, and likes are tied to Solana wallet identities, reducing bot spam and ensuring genuine community skin in the game.',
+            badge: 'Sybil Resistant',
+          },
+        ]}
+        hackathonDefense="Social trading is usually separated from real market execution, leading to rumors and pump-and-dump noise. MITIGATOR links social sentiment directly to quantitative risk vectors, SEC filings, and 1-click execution routers."
+      />
 
       {/* Asset selector */}
       <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin pb-2">

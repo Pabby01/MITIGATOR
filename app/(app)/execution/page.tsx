@@ -19,6 +19,7 @@ import {
   FlaskConical,
 } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
+import { PageTipSection } from '@/components/shared/PageTipSection';
 import { getAllAssets } from '@/lib/mock-data';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
@@ -322,6 +323,33 @@ function ExecutionRouterContent() {
           </span>
         </div>
       </div>
+
+      {/* ─── COLLAPSIBLE EXECUTION GUIDE ─── */}
+      <PageTipSection
+        pageTitle="Execution Router & Smart Order Telemetry"
+        subtitle="Comparing Backpack Institutional RFQ, Jupiter DEX, Raydium CLMM & Meteora DLMM"
+        badge="Execution Guide"
+        defaultOpen={false}
+        storageKey="execution_router"
+        tips={[
+          {
+            title: 'Backpack Institutional RFQ',
+            description: 'Direct institutional atomic match with zero MEV sandwiching and regulated custodian clearing under Dubai VARA.',
+            badge: 'Backpack RFQ',
+          },
+          {
+            title: 'Raydium & Meteora Dynamic Pools',
+            description: 'Queries concentrated liquidity bins with dynamic fee volatility compensation, adjusting automatically during US market open.',
+            badge: 'DLMM / CLMM',
+          },
+          {
+            title: 'Paper vs Live On-Chain Modes',
+            description: 'Toggle between Paper Simulation (risk-free testing with Pyth pricing) and Live On-Chain (requires Solana wallet signature for token swap).',
+            badge: 'Dual Mode',
+          },
+        ]}
+        hackathonDefense="Our Smart Order Router provides institutional execution transparency by comparing quotes across RFQ and AMM venues simultaneously, calculating effective slippage and MEV protection."
+      />
 
       {/* Execution Mode Selector */}
       <div className="flex items-center gap-2 p-1.5 rounded-xl bg-card/60 border border-border w-fit">

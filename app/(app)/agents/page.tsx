@@ -22,6 +22,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
+import { PageTipSection } from '@/components/shared/PageTipSection';
 import { AIAgent, AgentRunResult } from '@/lib/services/agents-service';
 import { getAllAssets } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
@@ -186,6 +187,35 @@ export default function AgentsPage() {
           </button>
         </div>
       </div>
+
+      {/* Interactive Guide & Defense Section */}
+      <PageTipSection
+        pageTitle="AI Autonomous Agent Fleet"
+        subtitle="How 9 specialized sub-agents independently audit and validate tokenized equities"
+        badge="Autonomous Pods"
+        storageKey="agents"
+        tips={[
+          {
+            title: 'Decentralized Pod Architecture',
+            description:
+              'Modeled after institutional quant pod shops. 9 dedicated sub-agents analyze separate domains: SEC Disclosures, Pyth Oracle Health, AMM Liquidity Depth, Social Drift, and Bankruptcy Remoteness.',
+            badge: '9 Sub-Agents',
+          },
+          {
+            title: 'Parallel Fleet Execution',
+            description:
+              'Dispatch all 9 agents simultaneously across any selected tokenized stock (NVDAx, TSLAx, AAPLx) to run comprehensive audits in seconds without bottlenecking.',
+            badge: 'Async Processing',
+          },
+          {
+            title: 'Transparent Telemetry Inspection',
+            description:
+              'Inspect raw machine-readable JSON inputs, step-by-step reasoning tokens, and cryptographic source proofs behind every agent finding to ensure full auditability.',
+            badge: 'Full Traceability',
+          },
+        ]}
+        hackathonDefense="Instead of relying on a black-box LLM prompt, MITIGATOR dispatches a specialized multi-agent grid where each agent has strict domain boundaries, verifiable tools, and objective confidence thresholds, delivering true institutional rigour to Solana DeFi."
+      />
 
       {/* Target Asset Selector */}
       <div className="flex items-center justify-between gap-3 flex-wrap p-3 rounded-xl bg-card/40 border border-border/70">

@@ -24,6 +24,7 @@ import { GlassPanel } from '@/components/shared/GlassPanel';
 import { ScoreRing } from '@/components/shared/ScoreRing';
 import { RiskBadge, SourceBadge } from '@/components/shared/SourceBadge';
 import { AnimatedNumber } from '@/components/shared/AnimatedNumber';
+import { PageTipSection } from '@/components/shared/PageTipSection';
 import { TradingViewChart } from '@/components/market/TradingViewChart';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
@@ -77,6 +78,33 @@ export default function DashboardPage() {
           </span>
         </div>
       </div>
+
+      {/* ─── COLLAPSIBLE FEATURE GUIDE ─── */}
+      <PageTipSection
+        pageTitle="Terminal Overview"
+        subtitle="Real-time macro dashboard, Pyth streaming telemetry, and tokenized stock monitoring"
+        badge="Terminal Guide"
+        defaultOpen={false}
+        storageKey="discover_overview"
+        tips={[
+          {
+            title: 'Sub-Second Pyth Price Feeds',
+            description: 'Streams institutional-grade real-world equity valuations from Pyth Hermes with cryptographic confidence intervals and zero synthetic delay.',
+            badge: 'Pyth Hermes',
+          },
+          {
+            title: 'Dynamic Venue Liquidity',
+            description: 'Monitors on-chain liquidity depth across Backpack Exchange, Jupiter Aggregator, Raydium CLMM, and Meteora DLMM pools in real time.',
+            badge: 'Liquidity',
+          },
+          {
+            title: '8-Factor Quantitative Risk Score',
+            description: 'Synthesizes market volatility, peg divergence from Tokens.xyz, issuer legal custody, smart contract audits, and SEC filings into a 0-100 composite score.',
+            badge: 'Risk Engine',
+          },
+        ]}
+        hackathonDefense="The MITIGATOR Overview Terminal provides a unified command center fusing TradFi market telemetry (TradingView + SEC EDGAR) with Solana on-chain liquidity, giving institutional and retail traders the clarity needed to navigate RWA tokenized equities safely."
+      />
 
       {/* ─── TOP METRICS WITH ANIMATED NUMBERS ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">

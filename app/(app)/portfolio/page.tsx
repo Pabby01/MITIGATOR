@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { RiskBadge } from '@/components/shared/SourceBadge';
+import { PageTipSection } from '@/components/shared/PageTipSection';
 import { AnimatedNumber } from '@/components/shared/AnimatedNumber';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
@@ -194,6 +195,41 @@ export default function PortfolioPage() {
           </div>
         </div>
       </div>
+
+      {/* Interactive Guide & Defense Section */}
+      <PageTipSection
+        pageTitle="Portfolio & Vault Management"
+        subtitle="How dual-mode tracking, continuous mark-to-market, and stress testing operate"
+        badge="Asset Architecture"
+        storageKey="portfolio"
+        tips={[
+          {
+            title: 'Dual Portfolio Tracking (Paper vs Live Vault)',
+            description:
+              'Switch with one click between your virtual $100k risk-free paper trading terminal and your real connected Solana on-chain wallet holdings (SPL & Token-2022).',
+            badge: 'Hybrid Engine',
+          },
+          {
+            title: 'Continuous Pyth Mark-to-Market Valuation',
+            description:
+              'All stock positions and cash reserves are continuously priced using sub-second Pyth Hermes oracle feeds, giving real-time NAV, unrealized PnL, and weighted beta calculations.',
+            badge: 'Real-Time NAV',
+          },
+          {
+            title: 'Institutional Stress Testing & Shock Scenarios',
+            description:
+              'Execute instant portfolio-wide stress simulations (e.g. Fed rate spikes, tech crashes, liquidity freeze) to measure tail-risk drawdowns and liquidation cushions.',
+            badge: 'Stress Lab',
+          },
+          {
+            title: 'Backpack Primary Mint & Redeem Gateway',
+            description:
+              'Direct integration with licensed tokenized stock broker-dealers for minting fresh 1:1 backed stock tokens or redeeming tokens directly for fiat bank settlement.',
+            badge: 'Primary Gateway',
+          },
+        ]}
+        hackathonDefense="Traditional stock brokerages keep holdings in closed, delayed silos with T+1 clearing. MITIGATOR provides a transparent, non-custodial portfolio with live cryptographic proof of holdings, continuous mark-to-market valuation, and real-time stress testing."
+      />
 
       {/* Wallet Status Banner if in Vault mode and disconnected */}
       {viewMode === 'vault' && !connected && (

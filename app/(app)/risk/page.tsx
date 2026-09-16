@@ -18,6 +18,7 @@ import {
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { ScoreRing } from '@/components/shared/ScoreRing';
 import { RiskBadge } from '@/components/shared/SourceBadge';
+import { PageTipSection } from '@/components/shared/PageTipSection';
 import { getAllAssets } from '@/lib/mock-data';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
 import { computeMitigatorRiskScore } from '@/lib/services/risk-engine';
@@ -119,6 +120,35 @@ export default function RiskPage() {
           })}
         </div>
       </div>
+
+      {/* Interactive Guide & Defense Section */}
+      <PageTipSection
+        pageTitle="Risk Center & Quantitative Engine"
+        subtitle="How multi-factor risk assessment, stress testing, and tranche sizing protect capital"
+        badge="PRD §8 Architecture"
+        storageKey="risk_center"
+        tips={[
+          {
+            title: 'Multi-Factor Quantitative Risk Scoring',
+            description:
+              'Combines 12 distinct vectors including SEC filing proximity (10-K/8-K), fundamental balance sheet health, social narrative sentiment, AMM liquidity depth, and Pyth oracle latency into a unified 0–100 score.',
+            badge: '12 Vectors',
+          },
+          {
+            title: 'Dynamic Pre-Trade Policy & Tranche DCA',
+            description:
+              'Simulates real order sizes against live liquidity. When order sizes exceed liquidity thresholds, the engine splits execution into an immediate swap plus trailing TWAP tranches to prevent market impact.',
+            badge: 'Capital Preservation',
+          },
+          {
+            title: 'Token-2022 Statutory Trust Backing',
+            description:
+              'Audits legal custody and SPV bankruptcy remoteness (xStocks, Dinari, Backed, Ondo) so equity holders maintain 1:1 claims to underlying shares without synthetic counterparty risk.',
+            badge: '1:1 Custody',
+          },
+        ]}
+        hackathonDefense="Unlike degen DEXes where users execute blind swaps with high slippage, MITIGATOR's Risk Center enforces institutional-grade pre-trade policy. It bridges Wall Street risk controls with Solana's 400ms atomic settlement, proving that tokenized equities can be traded responsibly on-chain."
+      />
 
       {/* Dynamic Risk Categories Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">

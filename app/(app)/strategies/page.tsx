@@ -23,6 +23,7 @@ import {
 import Link from 'next/link';
 import { GlassPanel } from '@/components/shared/GlassPanel';
 import { RiskBadge } from '@/components/shared/SourceBadge';
+import { PageTipSection } from '@/components/shared/PageTipSection';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { getUserProfile, UserProfile } from '@/lib/services/user-profile';
 import { MarketplaceStrategy, StrategySubscription } from '@/lib/services/strategies-service';
@@ -406,6 +407,35 @@ export default function StrategiesPage() {
           </button>
         </div>
       </div>
+
+      {/* Interactive Guide & Defense Section */}
+      <PageTipSection
+        pageTitle="Strategy Marketplace & Quantitative Copy Trading"
+        subtitle="How algorithmic stock strategies, risk guardrails, and automated copy execution work"
+        badge="Quant Marketplace"
+        storageKey="strategies"
+        tips={[
+          {
+            title: 'Verified Quantitative Models',
+            description:
+              'Browse rule-based strategies designed specifically for tokenized equities, including delta-neutral market making, volatility-breakout momentum, and mean-reversion.',
+            badge: 'On-Chain Quant',
+          },
+          {
+            title: 'Client-Side Risk-Bounded Copy Trading',
+            description:
+              'Copy verified strategies with strict user-defined parameters: maximum allocation caps, stop-loss triggers, and slippage ceilings so you never risk more than intended.',
+            badge: 'Capital Safety',
+          },
+          {
+            title: 'Virtual Paper Simulation & Backtesting',
+            description:
+              'Test any strategy directly in the Paper Trading terminal before allocating real USDC or SOL, observing performance across live Pyth market movements.',
+            badge: 'Zero Risk Sandbox',
+          },
+        ]}
+        hackathonDefense="While social trading platforms expose retail users to unverified 'signal callers' and hidden frontrunning, MITIGATOR's Strategy Marketplace requires verifiable rule-based code, transparent on-chain performance tracking, and client-enforced stop-loss guardrails."
+      />
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
