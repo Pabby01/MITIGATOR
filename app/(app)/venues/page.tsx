@@ -49,6 +49,7 @@ export default function VenuesDirectoryPage() {
   // Region tabs
   const regionTabs = [
     { id: 'all', label: 'All Regions', flag: '🌍' },
+    { id: 'Africa', label: 'Africa (NG & KE)', flag: '🌍' },
     { id: 'Nigeria', label: 'Nigeria', flag: '🇳🇬' },
     { id: 'Global / Multi-Region', label: 'Global DeFi', flag: '🌐' },
     { id: 'North America', label: 'United States', flag: '🇺🇸' },
@@ -78,6 +79,8 @@ export default function VenuesDirectoryPage() {
       if (selectedRegion !== 'all') {
         if (selectedRegion === 'Nigeria') {
           if (venue.country !== 'Nigeria') return false;
+        } else if (selectedRegion === 'Africa') {
+          if (venue.region !== 'Africa') return false;
         } else if (venue.region !== selectedRegion) {
           return false;
         }
@@ -179,9 +182,9 @@ export default function VenuesDirectoryPage() {
         storageKey="venues_directory"
         tips={[
           {
-            title: 'Nigerian On-Ramps & Tokenization',
-            description: 'Platforms like NectarFi, Roqqu, GetEquity, Busha, and Quidax provide instant Naira (NGN) bank transfers, SEC Nigeria compliance, and direct access to tokenized African assets like the Dangote Refinery.',
-            badge: 'Nigeria Rails',
+            title: 'Pan-African On-Ramps & Tokenized Stock Apps',
+            description: 'Platforms like NectarFi, Roqqu, GetEquity, Busha, Quidax, Trove Finance, and Hisa provide instant local currency bank & mobile transfers (NGN & KES), regulatory sandbox compliance, and direct access to tokenized African assets and fractional US equities.',
+            badge: 'Pan-Africa Rails',
           },
           {
             title: 'Global Regulated Tokenized Equities',
