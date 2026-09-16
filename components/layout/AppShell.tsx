@@ -27,6 +27,7 @@ import {
   ExternalLink,
   ShieldCheck,
   AlertCircle,
+  Globe,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
@@ -38,6 +39,7 @@ import { useSolanaWallet, WalletProviderType } from '@/lib/services/solana-walle
 const NAV_ITEMS = [
   { href: '/discover', label: 'Overview', icon: LayoutDashboard },
   { href: '/market', label: 'Markets', icon: TrendingUp },
+  { href: '/venues', label: 'Venues & Apps', icon: Globe },
   { href: '/intelligence', label: 'Intelligence', icon: Brain },
   { href: '/portfolio', label: 'Portfolio', icon: Wallet },
   { href: '/community', label: 'Community', icon: Users },
@@ -61,7 +63,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
-  const { connected, shortAddress, walletType, isModalOpen, setIsModalOpen } = useSolanaWallet();
+  const { connected, shortAddress, walletType, network, setNetwork, isModalOpen, setIsModalOpen } = useSolanaWallet();
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -260,10 +262,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Activity className="h-3.5 w-3.5 text-emerald-400" />
               <span className="text-muted-foreground">Pyth & Jup: Live</span>
             </div>
-            {/* Network */}
-            <div className="hidden md:flex items-center gap-1.5 text-xs">
-              <div className="h-1.5 w-1.5 rounded-full bg-accent" />
-              <span className="text-muted-foreground">Solana</span>
+            {/* Interactive Network Toggle Pill */}
+            <div className="flex items-center">
+              <button
+                type="button"
+                onClick={() => setNetwork(network === 'devnet' ? 'mainnet-beta' : 'devnet')}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono border transition-all cursor-pointer select-none",
+                  network === 'devnet'
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20"
+                    : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                )}
+                title={`Current cluster: ${network === 'devnet' ? 'Devnet' : 'Mainnet'}. Click to switch.`}
+              >
+                <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse", network === 'devnet' ? "bg-amber-400" : "bg-emerald-400")} />
+                <span className="font-semibold">{network === 'devnet' ? 'Devnet' : 'Mainnet'}</span>
+              </button>
             </div>
             {/* Theme toggle */}
             <ThemeToggle />
@@ -321,6 +335,8 @@ function WalletModal({ onClose }: { onClose: () => void }) {
     walletType,
     balanceSol,
     balanceUsdc,
+    network,
+    setNetwork,
     isInstalled,
     connect,
     disconnect,
@@ -361,9 +377,24 @@ function WalletModal({ onClose }: { onClose: () => void }) {
               <p className="text-xs text-muted-foreground">Select your browser extension</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setNetwork(network === 'devnet' ? 'mainnet-beta' : 'devnet')}
+              className={cn(
+                "px-2 py-0.5 rounded-full text-[10px] font-mono border transition-all cursor-pointer",
+                network === 'devnet'
+                  ? "bg-amber-500/15 border-amber-500/40 text-amber-400 hover:bg-amber-500/25"
+                  : "bg-emerald-500/15 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25"
+              )}
+              title="Click to toggle network"
+            >
+              ● {network === 'devnet' ? 'Devnet' : 'Mainnet'} (Switch)
+            </button>
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -380,7 +411,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
                 <span>Status</span>
                 <span className="text-emerald-400 font-semibold flex items-center gap-1">
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  Solana Mainnet-Beta Connected ({walletType?.toUpperCase()})
+                  {network === 'devnet' ? 'Solana Devnet' : 'Solana Mainnet'} Connected ({walletType?.toUpperCase()})
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
@@ -395,7 +426,28 @@ function WalletModal({ onClose }: { onClose: () => void }) {
                 <span className="text-muted-foreground">Live SOL Balance</span>
                 <span className="font-mono text-emerald-400 font-bold">{balanceSol.toFixed(4)} SOL</span>
               </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Live USDC Balance</span>
+                <span className="font-mono text-cyan-400 font-bold">${balanceUsdc.toFixed(2)} USDC</span>
+              </div>
             </div>
+
+            {network === 'devnet' && (
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                  <span>Devnet Sandbox Mode</span>
+                </div>
+                <a
+                  href="https://faucet.solana.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium underline hover:text-amber-200 flex items-center gap-1"
+                >
+                  Get Free Devnet SOL <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            )}
 
             <div className="flex gap-2">
               <button
@@ -479,7 +531,7 @@ function WalletModal({ onClose }: { onClose: () => void }) {
         )}
 
         <p className="text-[11px] text-muted-foreground text-center">
-          Non-custodial & secure. Real Solana Mainnet-Beta connection.
+          Non-custodial & secure. Real {network === 'devnet' ? 'Solana Devnet' : 'Solana Mainnet'} connection.
         </p>
       </motion.div>
     </div>

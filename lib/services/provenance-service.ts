@@ -72,7 +72,7 @@ export async function getLiveProvenanceRecords(symbol: string = 'NVDAx'): Promis
     {
       id: `prov-jup-${symbol}`,
       dataPoint: `DEX Liquidity Depth & Expected Execution Price`,
-      provider: 'Jupiter Aggregator v6 (Solana Mainnet)',
+      provider: 'Jupiter Aggregator v6 (Solana Routing Engine)',
       endpoint: 'https://quote-api.jup.ag/v6/quote',
       sourceTier: 'VERIFIED',
       freshness: 'realtime',

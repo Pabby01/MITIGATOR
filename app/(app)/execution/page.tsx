@@ -45,7 +45,7 @@ function ExecutionRouterContent() {
   const initialSymbol = searchParams.get('symbol') || 'NVDAx';
   const assets = getAllAssets();
   const { quotes: liveQuotes } = useDashboardLiveData();
-  const { connected, shortAddress, address, walletType, setIsModalOpen } = useSolanaWallet();
+  const { connected, shortAddress, address, walletType, network, setIsModalOpen } = useSolanaWallet();
 
   const [symbol, setSymbol] = useState(initialSymbol);
   const [amount, setAmount] = useState(2000);
@@ -311,8 +311,14 @@ function ExecutionRouterContent() {
               Backpack: {backpackSession.currentSession || 'US_EQUITIES_REGULAR'}
             </span>
           )}
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> Solana Mainnet-Beta Ready
+          <span className={cn(
+            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono border",
+            network === 'devnet'
+              ? "bg-amber-500/10 border-amber-500/20 text-amber-400"
+              : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+          )}>
+            <span className={cn("h-1.5 w-1.5 rounded-full animate-pulse", network === 'devnet' ? "bg-amber-400" : "bg-emerald-400")} />
+            {network === 'devnet' ? 'Solana Devnet Ready' : 'Solana Mainnet Ready'}
           </span>
         </div>
       </div>
@@ -639,7 +645,7 @@ function ExecutionRouterContent() {
                 </h3>
                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                   {connected
-                    ? `Account ${shortAddress} · Non-custodial signature verification on Solana Mainnet.`
+                    ? `Account ${shortAddress} · Non-custodial signature verification on ${network === 'devnet' ? 'Solana Devnet' : 'Solana Mainnet'}.`
                     : 'Operating in Autonomous Web3 Mode. Order will execute via simulated Jupiter AMM routing and log to your ledger.'}
                 </p>
 

@@ -21,6 +21,7 @@ import {
   Settings,
   Users,
   ChevronRight,
+  Globe,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
@@ -36,6 +37,7 @@ const PRIMARY_MOBILE_TABS = [
 ];
 
 const MORE_TOOLS = [
+  { href: '/venues', label: 'Venues & Apps Comparator', icon: Globe, desc: 'Compare Solana trading apps across Nigeria & Worldwide' },
   { href: '/risk', label: 'Risk Radar & Stress Tests', icon: ShieldCheck, desc: 'Real-time VaR, peg deviations & circuit breakers' },
   { href: '/agents', label: 'Autonomous AI Agents', icon: Bot, desc: 'HedgeBot, SEC Sentinel & Sentient Traders' },
   { href: '/robo', label: 'Robo Advisor', icon: Bot, desc: 'Automated delta-neutral rebalancing engine' },

@@ -3,6 +3,22 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export type WalletProviderType = 'phantom' | 'solflare' | 'backpack';
+export type SolanaNetwork = 'mainnet-beta' | 'devnet';
+
+export const SOLANA_CONFIG = {
+  devnet: {
+    name: 'Solana Devnet',
+    rpcUrl: process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.devnet.solana.com',
+    usdcMint: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+    explorer: (sig: string) => `https://solscan.io/tx/${sig}?cluster=devnet`,
+  },
+  'mainnet-beta': {
+    name: 'Solana Mainnet',
+    rpcUrl: process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
+    usdcMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    explorer: (sig: string) => `https://solscan.io/tx/${sig}`,
+  },
+};
 
 export interface WalletState {
   connected: boolean;
@@ -10,6 +26,8 @@ export interface WalletState {
   address: string | null;
   shortAddress: string;
   walletType: WalletProviderType | null;
+  network: SolanaNetwork;
+  setNetwork: (network: SolanaNetwork) => void;
   balanceSol: number;
   balanceUsdc: number;
   isModalOpen: boolean;
@@ -27,6 +45,8 @@ const SolanaWalletContext = createContext<WalletState>({
   address: null,
   shortAddress: '',
   walletType: null,
+  network: (process.env.NEXT_PUBLIC_SOLANA_NETWORK as SolanaNetwork) || 'devnet',
+  setNetwork: () => {},
   balanceSol: 0,
   balanceUsdc: 0,
   isModalOpen: false,
@@ -47,14 +67,11 @@ export function formatShortAddress(addr: string | null): string {
 /**
  * Direct Solana JSON-RPC balance query
  */
-export async function fetchLiveSolBalance(pubkey: string): Promise<number> {
-  const rpcEndpoints = [
-    process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
-    'https://api.devnet.solana.com',
-    'https://api.mainnet-beta.solana.com',
-  ].filter(Boolean) as string[];
+export async function fetchLiveSolBalance(pubkey: string, network: SolanaNetwork = 'devnet'): Promise<number> {
+  const primaryRpc = network === 'devnet' ? 'https://api.devnet.solana.com' : 'https://api.mainnet-beta.solana.com';
+  const customRpc = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
+  const rpcEndpoints = [customRpc, primaryRpc].filter(Boolean) as string[];
 
-  // Deduplicate endpoints
   const uniqueEndpoints = Array.from(new Set(rpcEndpoints));
 
   for (const rpcUrl of uniqueEndpoints) {
@@ -72,7 +89,7 @@ export async function fetchLiveSolBalance(pubkey: string): Promise<number> {
       });
       if (!res.ok) continue;
       const data = await res.json();
-      if (data?.result?.value !== undefined && data.result.value > 0) {
+      if (data?.result?.value !== undefined) {
         return data.result.value / 1e9; // convert lamports to SOL
       }
     } catch {
@@ -85,14 +102,13 @@ export async function fetchLiveSolBalance(pubkey: string): Promise<number> {
 /**
  * Direct Solana JSON-RPC query for SPL USDC balance
  */
-export async function fetchLiveUsdcBalance(pubkey: string): Promise<number> {
-  const rpcEndpoints = [
-    process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
-    'https://api.mainnet-beta.solana.com',
-  ].filter(Boolean) as string[];
+export async function fetchLiveUsdcBalance(pubkey: string, network: SolanaNetwork = 'devnet'): Promise<number> {
+  const config = SOLANA_CONFIG[network] || SOLANA_CONFIG['devnet'];
+  const customRpc = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
+  const rpcEndpoints = [customRpc, config.rpcUrl].filter(Boolean) as string[];
 
   const uniqueEndpoints = Array.from(new Set(rpcEndpoints));
-  const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+  const USDC_MINT = config.usdcMint;
 
   for (const rpcUrl of uniqueEndpoints) {
     try {
@@ -130,6 +146,25 @@ export async function fetchLiveUsdcBalance(pubkey: string): Promise<number> {
 }
 
 export function SolanaWalletProvider({ children }: { children: React.ReactNode }) {
+  const initialNetwork: SolanaNetwork =
+    (process.env.NEXT_PUBLIC_SOLANA_NETWORK as SolanaNetwork) || 'devnet';
+  const [network, setNetworkState] = useState<SolanaNetwork>(initialNetwork);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('mitigator_solana_network') as SolanaNetwork | null;
+      if (saved === 'devnet' || saved === 'mainnet-beta') {
+        setNetworkState(saved);
+      }
+    }
+  }, []);
+
+  const setNetwork = useCallback((net: SolanaNetwork) => {
+    setNetworkState(net);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mitigator_solana_network', net);
+    }
+  }, []);
   const [connected, setConnected] = useState<boolean>(false);
   const [connecting, setConnecting] = useState<boolean>(false);
   const [address, setAddress] = useState<string | null>(null);
@@ -172,8 +207,8 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
   const updateBalance = useCallback(async (pubkey: string) => {
     try {
       const [sol, usdc] = await Promise.all([
-        fetchLiveSolBalance(pubkey).catch(() => 0),
-        fetchLiveUsdcBalance(pubkey).catch(() => 0),
+        fetchLiveSolBalance(pubkey, network).catch(() => 0),
+        fetchLiveUsdcBalance(pubkey, network).catch(() => 0),
       ]);
       setBalanceSol(sol);
       setBalanceUsdc(usdc);
@@ -181,7 +216,14 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
       setBalanceSol(0);
       setBalanceUsdc(0);
     }
-  }, []);
+  }, [network]);
+
+  // Re-fetch balance when network toggles
+  useEffect(() => {
+    if (address) {
+      updateBalance(address);
+    }
+  }, [network, address, updateBalance]);
 
   const refreshBalance = useCallback(async () => {
     if (address) {
@@ -338,6 +380,8 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
         address,
         shortAddress,
         walletType,
+        network,
+        setNetwork,
         balanceSol,
         balanceUsdc,
         isModalOpen,

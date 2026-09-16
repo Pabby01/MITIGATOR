@@ -10,7 +10,7 @@ import { isSupabaseConfigured } from '@/lib/services/supabase';
 import { cn } from '@/lib/utils';
 
 export default function SettingsPage() {
-  const { connected, address, shortAddress, balanceSol, disconnect, setIsModalOpen } = useSolanaWallet();
+  const { connected, address, shortAddress, balanceSol, network, setNetwork, disconnect, setIsModalOpen } = useSolanaWallet();
   const [reducedMotion, setReducedMotion] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -80,7 +80,7 @@ export default function SettingsPage() {
                 <>
                   <p className="text-sm font-medium font-mono">{shortAddress}</p>
                   <p className="text-xs text-emerald-400 font-mono">
-                    {balanceSol.toFixed(3)} SOL · Solana Mainnet-Beta
+                    {balanceSol.toFixed(3)} SOL · {network === 'devnet' ? 'Solana Devnet' : 'Solana Mainnet'}
                   </p>
                 </>
               ) : (
@@ -273,18 +273,60 @@ export default function SettingsPage() {
 
       {/* Network */}
       <GlassPanel className="p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Globe className="h-4 w-4 text-violet-400" />
-          <h2 className="text-sm font-semibold tracking-wide">Network</h2>
-        </div>
-        <div className="flex items-center justify-between rounded-lg border border-border p-3">
-          <div>
-            <p className="text-sm font-medium">Solana Mainnet</p>
-            <p className="text-xs text-muted-foreground">Connected via Solana RPC</p>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-violet-400" />
+            <h2 className="text-sm font-semibold tracking-wide">Solana Cluster & Network</h2>
           </div>
-          <span className="flex items-center gap-1.5 text-xs text-emerald-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" /> Active
-          </span>
+          <span className="text-[11px] font-mono text-muted-foreground">Configurable in .env or switch live</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setNetwork('devnet')}
+            className={cn(
+              "flex items-start justify-between p-3 rounded-xl border text-left transition-all",
+              network === 'devnet'
+                ? "border-amber-500/50 bg-amber-500/10 ring-1 ring-amber-500/30"
+                : "border-border hover:border-border/80 bg-card/40"
+            )}
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-foreground">Solana Devnet</span>
+                {network === 'devnet' && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-medium">Active</span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">Recommended for testing, airdrops & simulated orders</p>
+              <p className="text-[10px] font-mono text-amber-400/80 mt-1">USDC: 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU</p>
+            </div>
+            <span className={cn("h-2 w-2 rounded-full mt-1 flex-shrink-0", network === 'devnet' ? "bg-amber-400 animate-pulse" : "bg-muted")} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setNetwork('mainnet-beta')}
+            className={cn(
+              "flex items-start justify-between p-3 rounded-xl border text-left transition-all",
+              network === 'mainnet-beta'
+                ? "border-emerald-500/50 bg-emerald-500/10 ring-1 ring-emerald-500/30"
+                : "border-border hover:border-border/80 bg-card/40"
+            )}
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-foreground">Solana Mainnet</span>
+                {network === 'mainnet-beta' && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-medium">Active</span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">Live production trading with real capital & tokenized shares</p>
+              <p className="text-[10px] font-mono text-emerald-400/80 mt-1">USDC: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v</p>
+            </div>
+            <span className={cn("h-2 w-2 rounded-full mt-1 flex-shrink-0", network === 'mainnet-beta' ? "bg-emerald-400 animate-pulse" : "bg-muted")} />
+          </button>
         </div>
       </GlassPanel>
 
