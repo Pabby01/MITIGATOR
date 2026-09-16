@@ -415,6 +415,12 @@ export default function VenuesDirectoryPage() {
                         {venue.regulation.status}
                       </span>
 
+                      {venue.id === 'nectarfi' && (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-blue-500/10 border border-blue-500/25 text-blue-400">
+                          Mobile App (iOS & Android)
+                        </span>
+                      )}
+
                       {venue.solanaNetworks.includes('devnet') && (
                         <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-amber-500/10 border border-amber-500/25 text-amber-400">
                           Devnet Ready
@@ -468,7 +474,7 @@ export default function VenuesDirectoryPage() {
                       rel="noopener noreferrer"
                       className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-sm group-hover:shadow"
                     >
-                      <span>Trade on {venue.name}</span>
+                      <span>{venue.id === 'nectarfi' ? 'Open NectarFi (Mobile App)' : `Trade on ${venue.name}`}</span>
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
 
@@ -620,7 +626,7 @@ export default function VenuesDirectoryPage() {
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                           >
-                            <span>Open {v.name}</span>
+                            <span>{v.id === 'nectarfi' ? 'Open NectarFi (Mobile App)' : `Open ${v.name}`}</span>
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         </td>
