@@ -41,38 +41,38 @@ MITIGATOR is architected as a modular, reactive, cloud-native 4-tier application
 
 ```mermaid
 flowchart TB
-    subgraph Tier_1 [Tier 1: Client Presentation Tier (Next.js 14 / React 18)]
-        UI_Shell["AppShell & Universal Nav (/app/(app)/*)"]
+    subgraph Tier_1 ["Client Presentation Tier (Next.js 14 / React 18)"]
+        UI_Shell["AppShell and Universal Nav (/app/(app)/*)"]
         Mobile_Nav["MobileBottomBar (Safe-Area Clearance: pb-32 sm:pb-36)"]
         Three_Hero["3D WebGL / R3F Canvas (AssetVisualizer)"]
-        Lightweight_Charts["Trading Candlestick & Volume Engine"]
+        Lightweight_Charts["Trading Candlestick and Volume Engine"]
         Wallet_Modal["Solana Wallet Adapter (Phantom, Solflare, Backpack)"]
-        Modals_Global["Unconstrained Global Modals (z-[100] Layer)"]
+        Modals_Global["Unconstrained Global Modals (Layer z-100)"]
     end
 
-    subgraph Tier_2 [Tier 2: Edge API Gateway & Middleware Tier]
+    subgraph Tier_2 ["Edge API Gateway and Middleware Tier"]
         Prices_Route["/api/prices (CoinGecko Live + Pyth Fallback)"]
-        Venues_Route["/api/venues (Liquidity, Pools & Reviews Feed)"]
+        Venues_Route["/api/venues (Liquidity, Pools and Reviews Feed)"]
         AI_Route["/api/ai/analyze (Structured Evidence Synthesis)"]
-        Paper_Route["/api/paper (Simulation Ledger & Devnet Bridge)"]
+        Paper_Route["/api/paper (Simulation Ledger and Devnet Bridge)"]
         Filings_Route["/api/filings (SEC EDGAR XBRL Pipeline)"]
         Alerts_Route["/api/alerts (Real-Time Peg Divergence Monitor)"]
     end
 
-    subgraph Tier_3 [Tier 3: Data, Oracle & Telemetry Tier]
+    subgraph Tier_3 ["Data, Oracle and Telemetry Tier"]
         Pyth_Hermes["Pyth Network Hermes (Low-Latency Price Oracles)"]
         CoinGecko_API["CoinGecko Public API (SOL/USDC Live Parity)"]
         SEC_EDGAR["SEC EDGAR 10-K / 10-Q / 8-K XBRL Data"]
-        Store_Telemetry["Google Play, App Store & Trustpilot Scraping Engine"]
+        Store_Telemetry["Store Reviews Engine (Google Play, App Store, Trustpilot)"]
         Supabase_DB[("Supabase PostgreSQL (Assets, Venues, Receipts, Policies)")]
     end
 
-    subgraph Tier_4 [Tier 4: Solana Web3 On-Chain Execution Tier]
-        Solana_RPC["Solana RPC Cluster (Devnet & Mainnet-Beta)"]
+    subgraph Tier_4 ["Solana Web3 On-Chain Execution Tier"]
+        Solana_RPC["Solana RPC Cluster (Devnet and Mainnet-Beta)"]
         Jupiter_Router["Jupiter v6 Smart Swap Aggregator"]
-        Raydium_Meteora["Raydium CLMM & Meteora DLMM Concentrated Liquidity"]
+        Raydium_Meteora["Raydium CLMM and Meteora DLMM Concentrated Liquidity"]
         Backpack_RFQ["Backpack Securities Institutional RFQ Gateway"]
-        Memo_Program["Solana SPL Memo Program (MemoSq4gq... Audit Trail)"]
+        Memo_Program["Solana SPL Memo Program (Audit Trail)"]
     end
 
     Tier_1 <--> Tier_2
@@ -87,31 +87,31 @@ MITIGATOR strictly enforces a 4-tier data classification policy, ensuring unveri
 
 ```mermaid
 graph TD
-    subgraph Tier_0 [Tier 0: Canonical On-Chain & Oracles]
-        T0_A["Pyth Network Hermes Feeds (Real-Time Price & Confidence)"]
-        T0_B["Solana RPC State & Token-2022 Mint Authority Accounts"]
+    subgraph Tier_0 ["Tier 0: Canonical On-Chain and Oracles"]
+        T0_A["Pyth Network Hermes Feeds (Real-Time Price and Confidence)"]
+        T0_B["Solana RPC State and Token-2022 Mint Authority Accounts"]
         T0_C["Primary Issuer Proof-of-Reserves (Dinari, Backpack, Backed)"]
     end
 
-    subgraph Tier_1 [Tier 1: Authoritative Regulatory Disclosures]
+    subgraph Tier_1 ["Tier 1: Authoritative Regulatory Disclosures"]
         T1_A["SEC EDGAR 10-K / 10-Q / 8-K XBRL Statements"]
         T1_B["Federal Reserve FRED Macro Series (Fed Funds, CPI, 10Y Treasury)"]
-        T1_C["Official Issuer Prospectuses & Transfer Agent Registries"]
+        T1_C["Official Issuer Prospectuses and Transfer Agent Registries"]
     end
 
-    subgraph Tier_2 [Tier 2: Institutional Market Aggregators & Telemetry]
+    subgraph Tier_2 ["Tier 2: Institutional Market Aggregators and Telemetry"]
         T2_A["CoinGecko Public Market API (SOL/USDC Parity)"]
-        T2_B["Google Play, Apple App Store & Trustpilot Verified Telemetry"]
+        T2_B["Google Play, Apple App Store and Trustpilot Verified Telemetry"]
         T2_C["DEX Pool Analytics (Raydium, Meteora DLMM, Jupiter)"]
     end
 
-    subgraph Tier_3 [Tier 3: Public Sentiment & Social Alpha]
+    subgraph Tier_3 ["Tier 3: Public Sentiment and Social Alpha"]
         T3_A["X / Twitter Developer API Streams"]
-        T3_B["Reddit & Stocktwits Sentiment Indicators"]
-        T3_C["Community User Threads & Unverified Trade Notes"]
+        T3_B["Reddit and Stocktwits Sentiment Indicators"]
+        T3_C["Community User Threads and Unverified Trade Notes"]
     end
 
-    Tier_0 --> Engine["MITIGATOR Fusion, Provenance & Risk Engine"]
+    Tier_0 --> Engine["MITIGATOR Fusion, Provenance and Risk Engine"]
     Tier_1 --> Engine
     Tier_2 --> Engine
     Tier_3 --> Engine
@@ -127,22 +127,22 @@ A curated directory and comparative aggregator for tokenized equity platforms ac
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Trader as Trader / Investor
-    participant UI as Venues Page (/venues)
+    actor Trader as Trader or Investor
+    participant UI as Venues Page
     participant Svc as VenuesDirectoryService
-    participant Store as Google / App Store Telemetry
-    participant Comp as Side-by-Side Comparator Modal
+    participant Store as Store Telemetry Engine
+    participant Comp as Comparator Modal
 
-    Trader->>UI: Select Region Filter (e.g. "Nigeria", "Africa", "Global DeFi")
+    Trader->>UI: Select Region Filter e.g. Nigeria or Global DeFi
     UI->>Svc: getVenues(filterCriteria)
-    Svc-->>UI: Return 12+ venues with TVL, 24h Vol & Top Pools
-    Trader->>UI: Click "Reviews & Ratings" Star Badge on Venue Card
+    Svc-->>UI: Return 12+ venues with TVL, 24h Vol and Top Pools
+    Trader->>UI: Click Reviews and Ratings badge on Venue Card
     UI->>UI: Expand animated slide-out reviews tray directly beneath card
-    UI->>Store: Render verified customer reviews, star breakdown, and direct verification links
-    Trader->>UI: Select 2 or 3 venues for Comparison
-    Trader->>UI: Click "Compare Venues (2)"
+    UI->>Store: Render verified customer reviews and ratings
+    Trader->>UI: Select 2 or 3 venues for comparison
+    Trader->>UI: Click Compare Venues
     UI->>Comp: Open Side-by-Side Comparison Modal
-    Comp-->>Trader: Display 10-vector matrix (Fees, Min Trade, KYC, TVL, Settlement Speed)
+    Comp-->>Trader: Display 10-vector comparison matrix
 ```
 
 - **12+ Verified Venues**: Backpack Exchange, Dinari dShares, Raydium, Jupiter, Meteora, NectarFi (Dangote pre-IPO access), Busha (SEC Nigeria Sandbox), Quidax (SEC Nigeria licensed), Trove Finance, Hisa Kenya (CMA Sandbox with M-Pesa), Belo LatAm, Backed Finance.
@@ -168,11 +168,11 @@ Continuous liquidity discovery across decentralized AMMs and centralized RFQs on
 
 ```mermaid
 graph LR
-    Order["User Order: 50 Shares NVDAx ($6,025)"] --> Router{"MITIGATOR Smart Order Router"}
+    Order["User Order: 50 Shares NVDAx"] --> Router{"MITIGATOR Smart Order Router"}
 
-    Router -->|Deep Liquidity (40%)| Jup["Jupiter v6 Aggregator"]
-    Router -->|Tight Spread (35%)| Ray["Raydium CLMM Pool"]
-    Router -->|Discrete Bins (25%)| Met["Meteora DLMM"]
+    Router -->|40% Deep Liquidity| Jup["Jupiter v6 Aggregator"]
+    Router -->|35% Tight Spread| Ray["Raydium CLMM Pool"]
+    Router -->|25% Discrete Bins| Met["Meteora DLMM"]
     Router -.->|Fallback RFQ| BP["Backpack Exchange RFQ"]
 
     Jup --> Engine["Atomic Settlement Engine"]
@@ -180,7 +180,7 @@ graph LR
     Met --> Engine
     BP --> Engine
 
-    Engine --> Memo["Solana SPL Memo Program (Audit Hash)"]
+    Engine --> Memo["Solana SPL Memo Program"]
     Memo --> Signature["Confirmed Transaction on Solana Ledger"]
 ```
 
@@ -196,28 +196,33 @@ A risk-free testing terminal with dual execution modes:
 ```mermaid
 stateDiagram-v2
     [*] --> TerminalMode
-    TerminalMode --> VirtualPaper: Mode 1: Virtual ($100k)
+    TerminalMode --> VirtualPaper: Mode 1: Virtual $100k
     TerminalMode --> LiveDevnet: Mode 2: Live Solana Devnet
 
     state VirtualPaper {
-        SimQuote: Query Pyth Hermes & CoinGecko Live Prices
-        SimFill: Simulate Slippage, Spread & Order Book Fill
-        SimLedger: Update In-Memory Portfolio & Supabase Ledger
-        SimQuote --> SimFill --> SimLedger
+        SimQuote: Query Pyth Hermes and CoinGecko Live Prices
+        SimFill: Simulate Slippage, Spread and Order Book Fill
+        SimLedger: Update In-Memory Portfolio and Supabase Ledger
+        SimQuote --> SimFill
+        SimFill --> SimLedger
     }
 
     state LiveDevnet {
-        CheckWallet: Verify Phantom / Solflare / Backpack Connected
-        BuildTx: Construct Solana Devnet Transaction (@solana/web3.js)
+        CheckWallet: Verify Phantom, Solflare, or Backpack Connected
+        BuildTx: Construct Solana Devnet Transaction
         EmbedMemo: Add SPL Memo Instruction with Trade Audit JSON
         SignTx: Request User Cryptographic Signature in Wallet
-        BroadcastTx: Send to api.devnet.solana.com with Commitment
-        ConfirmTx: Await Blockhash Confirmation (<1200ms)
-        CheckWallet --> BuildTx --> EmbedMemo --> SignTx --> BroadcastTx --> ConfirmTx
+        BroadcastTx: Send to Solana Devnet RPC
+        ConfirmTx: Await Blockhash Confirmation
+        CheckWallet --> BuildTx
+        BuildTx --> EmbedMemo
+        EmbedMemo --> SignTx
+        SignTx --> BroadcastTx
+        BroadcastTx --> ConfirmTx
     }
 
-    VirtualPaper --> RenderReceipt
-    LiveDevnet --> RenderReceipt
+    VirtualPaper --> RenderReceipt: Generate Trade Confirmation
+    LiveDevnet --> RenderReceipt: Generate Confirmation and Explorer Link
     RenderReceipt --> [*]
 ```
 
@@ -231,39 +236,23 @@ stateDiagram-v2
 Policy-governed autonomous agents operating under strict pre-trade risk guardrails:
 
 ```mermaid
-classDiagram
-    class AgentOrchestrator {
-        +registerAgent(agent: BaseAgent)
-        +evaluateGlobalPolicies(portfolioState)
-        +synthesizeEvidence(signals: Signal[])
-        +dispatchExecutionOrder(order: TradeOrder)
-    }
-    class HedgeBot {
-        +monitorPortfolioBeta()
-        +calculateDeltaNeutralHedge()
-        +suggestShortHedge(symbol, size)
-    }
-    class SECSentinel {
-        +pollEDGARStream()
-        +parseXBRLTables()
-        +detectEarningsSurprises()
-        +flag8KMaterialEvents()
-    }
-    class ArbitrageHunter {
-        +comparePythVsAMM()
-        +detectPegDivergence()
-        +calculateNetArbProfit()
-    }
-    class PreTradeCopilot {
-        +answerNaturalLanguageQueries()
-        +groundClaimsInFilings()
-        +generateCounterThesis()
-    }
-
-    AgentOrchestrator --> HedgeBot
-    AgentOrchestrator --> SECSentinel
-    AgentOrchestrator --> ArbitrageHunter
-    AgentOrchestrator --> PreTradeCopilot
+flowchart TD
+    Orchestrator["Agent Orchestrator (Policy Guardrails)"]
+    
+    HedgeBot["HedgeBot (Delta-Neutral Hedging)"]
+    SECSentinel["SEC Sentinel (10-K/10-Q/8-K Radar)"]
+    ArbHunter["Arbitrage Hunter (Pyth vs AMM Spreads)"]
+    Copilot["Pre-Trade Copilot (Grounded AI Reasoning)"]
+    
+    Orchestrator --> HedgeBot
+    Orchestrator --> SECSentinel
+    Orchestrator --> ArbHunter
+    Orchestrator --> Copilot
+    
+    HedgeBot --> Execution["Policy-Governed Execution Engine"]
+    SECSentinel --> Execution
+    ArbHunter --> Execution
+    Copilot --> Execution
 ```
 
 - **HedgeBot**: Delta-neutral hedging agent continuously calculating portfolio beta against SPY.
