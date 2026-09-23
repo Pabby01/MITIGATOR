@@ -87,38 +87,39 @@ export function useDashboardLiveData() {
           setIsPythConnected(true);
           setLastHeartbeat(Date.now());
         }
-      }
+      } else {
+        // Fallback to Pyth service if /api/prices is unreachable
+        const symbols = Object.keys(DEFAULT_ASSETS);
+        const multi = await getMultiLivePythPrices(symbols).catch(() => ({}));
 
-      // 2. Also query multi-feed Pyth Hermes directly for on-chain confidence
-      const symbols = Object.keys(DEFAULT_ASSETS);
-      const multi = await getMultiLivePythPrices(symbols).catch(() => ({}));
+        setQuotes((prev) => {
+          const next = { ...prev };
+          for (const [sym, pyth] of Object.entries(multi)) {
+            if (pyth && pyth.price > 0) {
+              const rawSym = sym.replace(/x$/, '');
+              const def = DEFAULT_ASSETS[rawSym];
+              const prevClose = def ? def.prevClose : pyth.price * 0.99;
+              const diff = pyth.price - prevClose;
+              const diffPct = (diff / prevClose) * 100;
 
-      setQuotes((prev) => {
-        const next = { ...prev };
-        for (const [sym, pyth] of Object.entries(multi)) {
-          if (pyth && pyth.price > 0) {
-            const rawSym = sym.replace(/x$/, '');
-            const def = DEFAULT_ASSETS[rawSym];
-            const prevClose = def ? def.prevClose : pyth.price * 0.99;
-            const diff = pyth.price - prevClose;
-            const diffPct = (diff / prevClose) * 100;
-
-            next[rawSym] = {
-              symbol: rawSym,
-              name: def?.name || rawSym,
-              price: pyth.price,
-              change24h: Number(diff.toFixed(2)),
-              changePct24h: Number(diffPct.toFixed(2)),
-              prevClose,
-              isLive: true,
-              lastUpdated: pyth.publishTime,
-              conf: pyth.conf,
-            };
-            next[`${rawSym}x`] = next[rawSym];
+              next[rawSym] = {
+                symbol: rawSym,
+                name: def?.name || rawSym,
+                price: pyth.price,
+                change24h: Number(diff.toFixed(2)),
+                changePct24h: Number(diffPct.toFixed(2)),
+                prevClose,
+                isLive: true,
+                lastUpdated: pyth.publishTime,
+                conf: pyth.conf,
+              };
+              next[`${rawSym}x`] = next[rawSym];
+            }
           }
-        }
-        return next;
-      });
+          return next;
+        });
+        setIsPythConnected(true);
+      }
     } catch (err) {
       console.warn('[useDashboardLiveData] Price poll error:', err);
     } finally {

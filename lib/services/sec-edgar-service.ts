@@ -25,6 +25,22 @@ const CIK_MAP: Record<string, string> = {
 export async function getLiveSECFilings(symbol: string): Promise<SECFiling[]> {
   const cik = CIK_MAP[symbol] || CIK_MAP['NVDAx'];
 
+  // In browser, route through local Next.js /api/filings to avoid SEC.gov CORS restrictions
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch(`/api/filings?symbol=${encodeURIComponent(symbol)}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.filings && Array.isArray(json.filings)) {
+          return json.filings;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+    return [];
+  }
+
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3500);

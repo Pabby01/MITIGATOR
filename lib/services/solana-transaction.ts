@@ -215,30 +215,62 @@ export async function executeRealSolanaTrade(
 /**
  * Request 1 Devnet SOL from the official Solana Devnet faucet via RPC
  */
-export async function requestDevnetAirdrop(publicKey: string): Promise<{ signature: string; explorerUrl: string }> {
-  const connection = new Connection(SOLANA_DEVNET_RPC, 'confirmed');
+export async function requestDevnetAirdrop(
+  publicKey: string
+): Promise<{ signature: string; explorerUrl: string; message?: string }> {
+  const connection = new Connection(SOLANA_DEVNET_RPC, {
+    commitment: 'confirmed',
+    disableRetryOnRateLimit: true,
+  });
   const pubkey = new PublicKey(publicKey);
 
   try {
+    // 1. Check existing wallet balance first
+    const currentLamports = await connection.getBalance(pubkey, 'confirmed').catch(() => 0);
+    const balanceSol = currentLamports / LAMPORTS_PER_SOL;
+
+    // If user already holds ample SOL (>0.05 SOL = >10,000 transactions), inform them gracefully
+    if (balanceSol >= 0.05) {
+      return {
+        signature: 'ALREADY_FUNDED',
+        explorerUrl: `https://explorer.solana.com/address/${publicKey}?cluster=devnet`,
+        message: `Wallet is already funded with ${balanceSol.toFixed(3)} SOL (~${Math.floor(balanceSol / 0.000005).toLocaleString()} transactions). You're ready to trade!`,
+      };
+    }
+
     const signature = await connection.requestAirdrop(pubkey, 1 * LAMPORTS_PER_SOL);
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
-    await connection.confirmTransaction({
-      signature,
-      blockhash,
-      lastValidBlockHeight,
-    }, 'confirmed');
+    await connection.confirmTransaction(
+      {
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      },
+      'confirmed'
+    );
 
     return {
       signature,
       explorerUrl: `https://explorer.solana.com/tx/${signature}?cluster=devnet`,
+      message: '+1.0 Devnet SOL Airdropped Successfully!',
     };
   } catch (err: any) {
-    console.error('[requestDevnetAirdrop] Airdrop failed:', err);
-    throw new Error(
-      err?.message?.includes('429')
-        ? 'Solana Devnet faucet rate limit reached. Please visit https://faucet.solana.com for direct airdrop.'
-        : `Airdrop request failed: ${err?.message || 'Network error'}`
-    );
+    const msg = err?.message || '';
+    const isRateLimited =
+      msg.includes('429') ||
+      msg.includes('airdrop limit') ||
+      msg.includes('run dry') ||
+      msg.includes('Internal error');
+
+    if (isRateLimited) {
+      console.warn('[requestDevnetAirdrop] Faucet rate-limited on public RPC.');
+      throw new Error(
+        'Devnet faucet rate limit reached. The public Solana RPC limits repeated airdrops. If you need more SOL, visit https://faucet.solana.com'
+      );
+    }
+
+    console.warn('[requestDevnetAirdrop] Airdrop failed:', msg);
+    throw new Error(`Airdrop request failed: ${msg || 'Network error'}`);
   }
 }
 

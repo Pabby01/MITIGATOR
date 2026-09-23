@@ -59,7 +59,7 @@ export default function PaperTradingPage() {
   const [executionTarget, setExecutionTarget] = useState<'paper' | 'onchain'>('paper');
   const [onchainSuccessTx, setOnchainSuccessTx] = useState<{ signature: string; explorerUrl: string } | null>(null);
   const [airdropLoading, setAirdropLoading] = useState(false);
-  const [airdropSuccess, setAirdropSuccess] = useState<{ signature: string; explorerUrl: string } | null>(null);
+  const [airdropSuccess, setAirdropSuccess] = useState<{ signature: string; explorerUrl: string; message?: string } | null>(null);
   const [airdropError, setAirdropError] = useState<string | null>(null);
 
   const handleRequestAirdrop = async () => {
@@ -67,6 +67,18 @@ export default function PaperTradingPage() {
       setIsModalOpen(true);
       return;
     }
+
+    // Proactive check: If wallet already has ample SOL (>0.05 SOL = >10,000 transactions on Solana)
+    if (balanceSol >= 0.05) {
+      setAirdropSuccess({
+        signature: 'ALREADY_FUNDED',
+        explorerUrl: `https://explorer.solana.com/address/${address}?cluster=devnet`,
+        message: `Wallet already funded with ${balanceSol.toFixed(3)} SOL (~${Math.floor(balanceSol / 0.000005).toLocaleString()} transactions). Ready to trade!`,
+      });
+      setAirdropError(null);
+      return;
+    }
+
     setAirdropLoading(true);
     setAirdropError(null);
     setAirdropSuccess(null);
@@ -711,26 +723,29 @@ export default function PaperTradingPage() {
 
                           {airdropSuccess && (
                             <div className="flex items-center justify-between p-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-[11px] text-emerald-300">
-                              <span>+1.0 Devnet SOL Airdropped Successfully!</span>
+                              <span className="truncate pr-2">
+                                {airdropSuccess.message || '+1.0 Devnet SOL Airdropped Successfully!'}
+                              </span>
                               <a
                                 href={airdropSuccess.explorerUrl}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-emerald-400 underline font-mono flex items-center gap-1 hover:text-emerald-300"
+                                className="text-emerald-400 underline font-mono flex items-center gap-1 hover:text-emerald-300 shrink-0"
                               >
-                                View Tx <ExternalLink className="h-2.5 w-2.5" />
+                                {airdropSuccess.signature === 'ALREADY_FUNDED' ? 'Explorer' : 'View Tx'}{' '}
+                                <ExternalLink className="h-2.5 w-2.5" />
                               </a>
                             </div>
                           )}
 
                           {airdropError && (
-                            <div className="p-2 rounded-lg bg-amber-500/15 border border-amber-500/30 text-[11px] text-amber-300 flex items-center justify-between">
-                              <span className="truncate max-w-[260px]">{airdropError}</span>
+                            <div className="p-2 rounded-lg bg-amber-500/15 border border-amber-500/30 text-[11px] text-amber-300 flex items-center justify-between gap-1">
+                              <span className="truncate">{airdropError}</span>
                               <a
                                 href="https://faucet.solana.com"
                                 target="_blank"
                                 rel="noreferrer"
-                                className="underline font-mono text-[10px] ml-1 flex-shrink-0"
+                                className="underline font-mono text-[10px] text-amber-400 hover:text-amber-300 flex-shrink-0"
                               >
                                 faucet.solana.com
                               </a>
