@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lightbulb, ChevronDown, Sparkles, BookOpen, ShieldCheck, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,20 +32,29 @@ export function PageTipSection({
 }: PageTipSectionProps) {
   const key = storageKey ? `mitigator_tip_open_${storageKey}` : `mitigator_tip_open_${pageTitle.toLowerCase().replace(/\s+/g, '_')}`;
 
-  const [isOpen, setIsOpen] = useState(() => {
-    if (typeof window !== 'undefined') {
+  // Initialize with defaultOpen so server HTML and initial client hydration match 100%
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  // Sync with user's saved preference in localStorage after hydration completes
+  useEffect(() => {
+    try {
       const saved = localStorage.getItem(key);
-      if (saved !== null) return saved === 'true';
+      if (saved !== null) {
+        setIsOpen(saved === 'true');
+      }
+    } catch {
+      // Gracefully ignore storage errors in restricted contexts
     }
-    return defaultOpen;
-  });
+  }, [key]);
 
   const toggle = () => {
-    const next = !isOpen;
-    setIsOpen(next);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(key, String(next));
-    }
+    setIsOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(key, String(next));
+      } catch {}
+      return next;
+    });
   };
 
   return (
@@ -78,7 +87,7 @@ export function PageTipSection({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-primary hidden sm:inline">
+          <span className="text-xs font-medium text-primary hidden sm:inline" suppressHydrationWarning>
             {isOpen ? 'Collapse Guide' : 'Expand Guide'}
           </span>
           <div className={cn('p-1 rounded-lg border border-border/80 bg-card/60 text-muted-foreground transition-transform duration-200', isOpen && 'rotate-180')}>
