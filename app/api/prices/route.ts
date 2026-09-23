@@ -102,7 +102,7 @@ export async function GET() {
   const stockSymbols = [
     'NVDA', 'TSLA', 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'SPY',
     'AMD', 'VTI', 'VOO', 'TSM', 'AVGO', 'SPCX', 'COIN', 'PLTR',
-    'BABA', 'NFLX', 'CRCL', 'DKNG', 'BRK',
+    'BABA', 'NFLX', 'CRCL', 'DKNG', 'BRK', 'OPENAI.T', 'KALSHI.T',
   ];
   
   // Real market baseline values
@@ -128,6 +128,8 @@ export async function GET() {
     CRCL: { price: 14.8, prevClose: 13.9 },
     DKNG: { price: 42.1, prevClose: 40.8 },
     BRK: { price: 462.5, prevClose: 460.1 },
+    'OPENAI.T': { price: 42.50, prevClose: 40.80 },
+    'KALSHI.T': { price: 12.80, prevClose: 12.10 },
   };
 
   for (const sym of stockSymbols) {

@@ -211,3 +211,34 @@ export async function executeRealSolanaTrade(
     },
   };
 }
+
+/**
+ * Request 1 Devnet SOL from the official Solana Devnet faucet via RPC
+ */
+export async function requestDevnetAirdrop(publicKey: string): Promise<{ signature: string; explorerUrl: string }> {
+  const connection = new Connection(SOLANA_DEVNET_RPC, 'confirmed');
+  const pubkey = new PublicKey(publicKey);
+
+  try {
+    const signature = await connection.requestAirdrop(pubkey, 1 * LAMPORTS_PER_SOL);
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+    await connection.confirmTransaction({
+      signature,
+      blockhash,
+      lastValidBlockHeight,
+    }, 'confirmed');
+
+    return {
+      signature,
+      explorerUrl: `https://explorer.solana.com/tx/${signature}?cluster=devnet`,
+    };
+  } catch (err: any) {
+    console.error('[requestDevnetAirdrop] Airdrop failed:', err);
+    throw new Error(
+      err?.message?.includes('429')
+        ? 'Solana Devnet faucet rate limit reached. Please visit https://faucet.solana.com for direct airdrop.'
+        : `Airdrop request failed: ${err?.message || 'Network error'}`
+    );
+  }
+}
+

@@ -28,12 +28,14 @@ import {
   ShieldCheck,
   AlertCircle,
   Globe,
+  Award,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { BrandLogo } from '@/components/shared/BrandLogo';
 import { PhantomLogo, SolflareLogo, BackpackLogo } from '@/components/shared/WalletIcons';
 import { MobileBottomBar } from '@/components/layout/MobileBottomBar';
+import { JudgeGuideModal } from '@/components/shared/JudgeGuideModal';
 import { useSolanaWallet, WalletProviderType } from '@/lib/services/solana-wallet';
 
 const NAV_ITEMS = [
@@ -62,6 +64,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [judgeGuideOpen, setJudgeGuideOpen] = useState(false);
 
   const { connected, shortAddress, walletType, network, setNetwork, isModalOpen, setIsModalOpen } = useSolanaWallet();
 
@@ -279,6 +282,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <span className="font-semibold">{network === 'devnet' ? 'Devnet' : 'Mainnet'}</span>
               </button>
             </div>
+            {/* Stocklana Judge Guide Button */}
+            <button
+              type="button"
+              onClick={() => setJudgeGuideOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 via-primary/20 to-purple-500/20 hover:from-amber-500/30 hover:to-purple-500/30 border border-amber-500/40 text-amber-300 font-semibold text-xs transition-all active:scale-95 shadow-sm shadow-amber-500/10 cursor-pointer"
+              title="Stocklana 2026 Judge Guide & Evaluation Checklist"
+            >
+              <Award className="h-3.5 w-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Judge Guide</span>
+              <span className="sm:hidden">Guide</span>
+            </button>
             {/* Theme toggle */}
             <ThemeToggle />
             {/* Wallet button */}
@@ -323,6 +337,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <WalletModal onClose={() => setIsModalOpen(false)} />
         )}
       </AnimatePresence>
+
+      {/* Stocklana 2026 Hackathon Judge Guide Modal */}
+      <JudgeGuideModal isOpen={judgeGuideOpen} onClose={() => setJudgeGuideOpen(false)} />
     </div>
   );
 }

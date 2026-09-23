@@ -31,12 +31,12 @@ import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { PaperPortfolioSummary, PaperTradeRecord } from '@/lib/services/paper-trading-service';
 import { getAllAssets } from '@/lib/mock-data';
 import { PYTH_FEED_IDS } from '@/lib/services/pyth-service';
-import { executeRealSolanaTrade } from '@/lib/services/solana-transaction';
+import { executeRealSolanaTrade, requestDevnetAirdrop } from '@/lib/services/solana-transaction';
 import { cn } from '@/lib/utils';
 
 export default function PaperTradingPage() {
   const assets = getAllAssets();
-  const { address, connected, network, walletType, setIsModalOpen, refreshBalance } = useSolanaWallet();
+  const { address, shortAddress, balanceSol, connected, network, walletType, setIsModalOpen, refreshBalance } = useSolanaWallet();
   const userAddr = address || 'guest';
 
   const [portfolio, setPortfolio] = useState<PaperPortfolioSummary | null>(null);
@@ -58,6 +58,28 @@ export default function PaperTradingPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [executionTarget, setExecutionTarget] = useState<'paper' | 'onchain'>('paper');
   const [onchainSuccessTx, setOnchainSuccessTx] = useState<{ signature: string; explorerUrl: string } | null>(null);
+  const [airdropLoading, setAirdropLoading] = useState(false);
+  const [airdropSuccess, setAirdropSuccess] = useState<{ signature: string; explorerUrl: string } | null>(null);
+  const [airdropError, setAirdropError] = useState<string | null>(null);
+
+  const handleRequestAirdrop = async () => {
+    if (!address) {
+      setIsModalOpen(true);
+      return;
+    }
+    setAirdropLoading(true);
+    setAirdropError(null);
+    setAirdropSuccess(null);
+    try {
+      const res = await requestDevnetAirdrop(address);
+      setAirdropSuccess(res);
+      await refreshBalance().catch(() => {});
+    } catch (err: any) {
+      setAirdropError(err?.message || 'Airdrop request failed');
+    } finally {
+      setAirdropLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (connected) {
@@ -635,6 +657,89 @@ export default function PaperTradingPage() {
                       Live Devnet Wallet
                     </button>
                   </div>
+
+                  {/* Devnet Wallet Connection & 1-Click SOL Faucet Airdrop */}
+                  {executionTarget === 'onchain' && (
+                    <div className="p-3.5 rounded-xl border border-emerald-500/25 bg-emerald-500/5 space-y-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 font-semibold text-emerald-400">
+                          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>Solana Devnet Settlement</span>
+                        </div>
+                        <span className="font-mono text-muted-foreground text-[11px]">
+                          {connected ? `Balance: ${balanceSol.toFixed(3)} SOL` : 'No wallet connected'}
+                        </span>
+                      </div>
+
+                      {!connected ? (
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-muted-foreground text-[11px]">Connect Solflare, Phantom or Backpack to sign live testnet trades.</span>
+                          <button
+                            type="button"
+                            onClick={() => setIsModalOpen(true)}
+                            className="px-3 py-1 rounded-lg bg-primary text-primary-foreground font-semibold text-xs shadow-xs hover:bg-primary/90 cursor-pointer"
+                          >
+                            Connect
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5 pt-0.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[11px] text-muted-foreground truncate">
+                              Signer: <span className="font-mono text-foreground font-semibold">{shortAddress}</span>
+                            </span>
+                            <button
+                              type="button"
+                              disabled={airdropLoading}
+                              onClick={handleRequestAirdrop}
+                              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 text-[11px] font-semibold transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                              title="Request 1 Free Devnet SOL to fund your wallet for test gas fees"
+                            >
+                              {airdropLoading ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                  <span>Airdropping 1 SOL...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Zap className="h-3 w-3" />
+                                  <span>⚡ Airdrop 1 Devnet SOL</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          {airdropSuccess && (
+                            <div className="flex items-center justify-between p-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-[11px] text-emerald-300">
+                              <span>+1.0 Devnet SOL Airdropped Successfully!</span>
+                              <a
+                                href={airdropSuccess.explorerUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-emerald-400 underline font-mono flex items-center gap-1 hover:text-emerald-300"
+                              >
+                                View Tx <ExternalLink className="h-2.5 w-2.5" />
+                              </a>
+                            </div>
+                          )}
+
+                          {airdropError && (
+                            <div className="p-2 rounded-lg bg-amber-500/15 border border-amber-500/30 text-[11px] text-amber-300 flex items-center justify-between">
+                              <span className="truncate max-w-[260px]">{airdropError}</span>
+                              <a
+                                href="https://faucet.solana.com"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="underline font-mono text-[10px] ml-1 flex-shrink-0"
+                              >
+                                faucet.solana.com
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {onchainSuccessTx && (
                     <div className="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-xs space-y-1.5">

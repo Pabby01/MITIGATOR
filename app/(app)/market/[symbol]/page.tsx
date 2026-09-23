@@ -24,6 +24,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { TradingViewChart } from '@/components/market/TradingViewChart';
+import { PythDualFeedRadar } from '@/components/market/PythDualFeedRadar';
 import { GlassPanel, PriceChange } from '@/components/shared/GlassPanel';
 import { ScoreRing } from '@/components/shared/ScoreRing';
 import { SourceBadge, RiskBadge, FreshnessBadge } from '@/components/shared/SourceBadge';
@@ -333,6 +334,9 @@ export default function StockDetailPage() {
             height={540}
             showDexScreenerToggle={true}
           />
+
+          {/* Pyth Network Dual-Feed & Peg Radar */}
+          <PythDualFeedRadar initialSymbol={symbol} showSelector={false} />
 
           {/* MITIGATOR Score breakdown */}
           <div className="grid lg:grid-cols-2 gap-4">

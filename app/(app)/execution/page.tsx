@@ -25,6 +25,7 @@ import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
 import { PYTH_FEED_IDS } from '@/lib/services/pyth-service';
 import { executeRealSolanaTrade } from '@/lib/services/solana-transaction';
+import { PythDualFeedRadar } from '@/components/market/PythDualFeedRadar';
 import { cn } from '@/lib/utils';
 
 export default function ExecutionPage() {
@@ -450,6 +451,9 @@ function ExecutionRouterContent() {
           </div>
         </div>
       </GlassPanel>
+
+      {/* ─── PYTH DUAL-FEED & PEG RADAR (Pyth Market Data Bounty) ─── */}
+      <PythDualFeedRadar initialSymbol={symbol} />
 
       {/* Live Routing & Telemetry Protocol Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
