@@ -94,11 +94,10 @@ export function GsapScrollEffects() {
       showcaseTimeline.fromTo(
         leftCard,
         {
-          opacity: 0,
-          scale: 0.35,
-          xPercent: 55,
-          rotateY: 18,
-          rotateZ: 4,
+          opacity: 0.2,
+          scale: 0.8,
+          xPercent: 30,
+          rotateY: 10,
           transformOrigin: 'center center',
         },
         {
@@ -106,7 +105,6 @@ export function GsapScrollEffects() {
           scale: 1,
           xPercent: 0,
           rotateY: 0,
-          rotateZ: 0,
           ease: 'power2.out',
         },
         0
@@ -116,11 +114,10 @@ export function GsapScrollEffects() {
       showcaseTimeline.fromTo(
         rightCard,
         {
-          opacity: 0,
-          scale: 0.35,
-          xPercent: -55,
-          rotateY: -18,
-          rotateZ: -4,
+          opacity: 0.2,
+          scale: 0.8,
+          xPercent: -30,
+          rotateY: -10,
           transformOrigin: 'center center',
         },
         {
@@ -128,14 +125,19 @@ export function GsapScrollEffects() {
           scale: 1,
           xPercent: 0,
           rotateY: 0,
-          rotateZ: 0,
           ease: 'power2.out',
         },
         0
       );
     }
 
+    // Refresh after DOM layout calculation to prevent layout jumps
+    const timer = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 150);
+
     return () => {
+      clearTimeout(timer);
       ScrollTrigger.getAll().forEach((t) => t.kill());
     };
   }, []);

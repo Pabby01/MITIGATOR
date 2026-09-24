@@ -362,6 +362,7 @@ export default function VenuesDirectoryPage() {
                             alt={`${venue.name} official logo`}
                             className="h-8 w-8 object-contain rounded"
                             loading="lazy"
+                            decoding="async"
                             onError={(e) => {
                               // If image fails, replace with stylized letter badge
                               const target = e.target as HTMLImageElement;
@@ -811,7 +812,7 @@ export default function VenuesDirectoryPage() {
                       {comparedVenues.map((v) => (
                         <th key={v.id} className="py-3 px-4 font-bold text-sm text-foreground">
                           <div className="flex items-center gap-2">
-                            <img src={v.logoUrl} alt={v.name} className="h-5 w-5 rounded object-contain" />
+                            <img src={v.logoUrl} alt={v.name} className="h-5 w-5 rounded object-contain" loading="lazy" decoding="async" />
                             <span>{v.name}</span>
                             <span>{v.flag}</span>
                           </div>

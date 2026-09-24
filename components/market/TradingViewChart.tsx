@@ -42,6 +42,7 @@ export function TradingViewChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeFeed, setActiveFeed] = useState<'tradingview' | 'dexscreener'>('tradingview');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [chartLoading, setChartLoading] = useState(true);
 
   const cleanSymbol = symbol.replace(/x$/, '');
   const config = SYMBOL_MAP[symbol] || SYMBOL_MAP[cleanSymbol] || {
@@ -57,6 +58,8 @@ export function TradingViewChart({
     const container = containerRef.current;
     if (!container) return;
 
+    setChartLoading(true);
+
     // Clear previous widget
     container.innerHTML = '';
 
@@ -65,6 +68,13 @@ export function TradingViewChart({
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
     script.type = 'text/javascript';
     script.async = true;
+    script.onload = () => {
+      setChartLoading(false);
+    };
+    script.onerror = () => {
+      setChartLoading(false);
+    };
+
     script.innerHTML = JSON.stringify({
       autosize: true,
       symbol: tvSymbol,
@@ -97,7 +107,11 @@ export function TradingViewChart({
     container.appendChild(widgetContainer);
     container.appendChild(script);
 
+    // Safety timeout in case onload doesn't fire
+    const timer = setTimeout(() => setChartLoading(false), 2000);
+
     return () => {
+      clearTimeout(timer);
       if (container) {
         container.innerHTML = '';
       }
@@ -182,13 +196,21 @@ export function TradingViewChart({
       {/* Chart Body */}
       <div className="flex-1 w-full relative bg-[#090d14] min-h-[300px]">
         {activeFeed === 'tradingview' ? (
-          <div
-            ref={containerRef}
-            className="tradingview-widget-container h-full w-full"
-            style={{ minHeight: '300px' }}
-          >
-            <div className="tradingview-widget-container__widget h-full w-full" />
-          </div>
+          <>
+            {chartLoading && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#090d14]/90 backdrop-blur-xs text-xs text-muted-foreground gap-2 pointer-events-none">
+                <div className="h-6 w-6 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
+                <span className="font-mono text-[11px]">Connecting to live market chart...</span>
+              </div>
+            )}
+            <div
+              ref={containerRef}
+              className="tradingview-widget-container h-full w-full"
+              style={{ minHeight: '300px' }}
+            >
+              <div className="tradingview-widget-container__widget h-full w-full" />
+            </div>
+          </>
         ) : (
           <div className="h-full w-full flex flex-col">
             <iframe

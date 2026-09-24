@@ -33,12 +33,19 @@ import { BrandLogo } from '@/components/shared/BrandLogo';
 import { AnimatedFactorBar } from '@/components/landing/AnimatedFactorBar';
 import { PublicNav } from '@/components/layout/PublicNav';
 import { PublicFooter } from '@/components/layout/PublicFooter';
+import { ProgressiveImage } from '@/components/shared/ProgressiveImage';
+import { LazyLoader } from '@/components/shared/LazyLoader';
 import { getAllAssets } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 
 const MarketUniverse = dynamic(
   () => import('@/components/three/MarketUniverse').then((m) => m.MarketUniverse),
-  { ssr: false, loading: () => <div className="w-full h-full bg-background/50" /> }
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full bg-gradient-to-br from-emerald-950/20 via-background to-teal-950/20 opacity-80" />
+    ),
+  }
 );
 
 const SimulatedTradeWindow = dynamic(
@@ -128,8 +135,15 @@ export default function LandingPage() {
         <div className="absolute inset-0 mesh-gradient-ambient pointer-events-none" />
 
         {/* 3D WebGL Canvas Layer */}
-        <div className="absolute inset-0 z-0">
-          <MarketUniverse className="w-full h-full" interactive={true} />
+        <div className="absolute inset-0 z-0 pointer-events-auto">
+          <LazyLoader
+            delayMs={120}
+            fallback={
+              <div className="w-full h-full bg-gradient-to-br from-emerald-950/20 via-background to-teal-950/20 opacity-80" />
+            }
+          >
+            <MarketUniverse className="w-full h-full" interactive={true} />
+          </LazyLoader>
         </div>
 
         {/* Top/Bottom Soft Gradient Fades */}
@@ -443,14 +457,15 @@ export default function LandingPage() {
             {/* Image Card 1 */}
             <div className="showcase-card-left hairline-card rounded-3xl overflow-hidden p-3.5 border border-white/10 flex flex-col justify-between group">
               <div className="relative rounded-2xl overflow-hidden aspect-[16/9] w-full bg-card/60">
-                <img
+                <ProgressiveImage
                   src="/images/terminal-preview.jpg"
+                  avifSrc="/images/terminal-preview.avif"
+                  placeholderSrc="/images/terminal-preview-placeholder.jpg"
                   alt="MITIGATOR 3D Institutional Risk Radar Terminal"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60" />
-                <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-emerald-500/30 text-xs font-mono text-emerald-400">
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60 pointer-events-none" />
+                <div className="absolute top-4 left-4 z-20 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-emerald-500/30 text-xs font-mono text-emerald-400 pointer-events-none">
                   <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                   Live Risk Radar Terminal
                 </div>
@@ -469,14 +484,15 @@ export default function LandingPage() {
             {/* Image Card 2 */}
             <div className="showcase-card-right hairline-card rounded-3xl overflow-hidden p-3.5 border border-white/10 flex flex-col justify-between group">
               <div className="relative rounded-2xl overflow-hidden aspect-[16/9] w-full bg-card/60">
-                <img
+                <ProgressiveImage
                   src="/images/vault-preview.jpg"
+                  avifSrc="/images/vault-preview.avif"
+                  placeholderSrc="/images/vault-preview-placeholder.jpg"
                   alt="Solana Tokenized Stock Cryptographic Collateral Vault"
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60" />
-                <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-cyan-500/30 text-xs font-mono text-cyan-400">
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60 pointer-events-none" />
+                <div className="absolute top-4 left-4 z-20 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-cyan-500/30 text-xs font-mono text-cyan-400 pointer-events-none">
                   <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
                   Token-2022 Verified Vaults
                 </div>
@@ -634,15 +650,35 @@ export default function LandingPage() {
       </section>
 
       {/* ─── SECTION 5: DYNAMIC LIVE EXECUTION ROUTER (MOVING FIGURES & AUTO-SORTING BEST ROUTE) ─── */}
-      <LiveExecutionRouter />
+      <LazyLoader
+        rootMargin="200px"
+        fallback={
+          <div className="w-full min-h-[300px] flex items-center justify-center bg-card/10 border-y border-border/20">
+            <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+          </div>
+        }
+      >
+        <LiveExecutionRouter />
+      </LazyLoader>
 
       {/* ─── INTERACTIVE 3D SIMULATED TRADE COCKPIT ─── */}
       <div data-gsap="fade-up">
-        <SimulatedTradeWindow />
+        <LazyLoader
+          rootMargin="200px"
+          fallback={
+            <div className="w-full min-h-[360px] flex items-center justify-center bg-card/10 rounded-3xl border border-border/30">
+              <div className="h-6 w-6 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+            </div>
+          }
+        >
+          <SimulatedTradeWindow />
+        </LazyLoader>
       </div>
 
       {/* ─── SECTION 6: INTERACTIVE TYPEWRITER CTA & CURSOR-REACTIVE GLOW ─── */}
-      <InteractiveCtaSection />
+      <LazyLoader rootMargin="150px">
+        <InteractiveCtaSection />
+      </LazyLoader>
 
       {/* ─── FOOTER ─── */}
       <PublicFooter />

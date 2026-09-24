@@ -208,7 +208,7 @@ export function UserProfileModal({
                 <div className="relative">
                   <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full border-4 border-card bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center text-xl sm:text-2xl font-bold text-foreground shadow-lg overflow-hidden">
                     {profile.avatar ? (
-                      <img src={profile.avatar} alt={profile.name} className="h-full w-full object-cover" />
+                      <img src={profile.avatar} alt={profile.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
                     ) : (
                       profile.name.slice(0, 2).toUpperCase()
                     )}

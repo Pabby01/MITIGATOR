@@ -14,7 +14,8 @@ export function PhantomLogo({ className = 'h-7 w-7' }: { className?: string }) {
       src="/wallets/phantom.png"
       alt="Phantom official logo"
       className={cn('object-contain rounded-xl flex-shrink-0', className)}
-      loading="eager"
+      loading="lazy"
+      decoding="async"
     />
   );
 }
@@ -25,7 +26,8 @@ export function SolflareLogo({ className = 'h-7 w-7' }: { className?: string }) 
       src="/wallets/solflare.svg"
       alt="Solflare official logo"
       className={cn('object-contain rounded-xl flex-shrink-0', className)}
-      loading="eager"
+      loading="lazy"
+      decoding="async"
     />
   );
 }
@@ -36,7 +38,8 @@ export function BackpackLogo({ className = 'h-7 w-7' }: { className?: string }) 
       src="/wallets/backpack.png"
       alt="Backpack official logo"
       className={cn('object-contain rounded-xl flex-shrink-0', className)}
-      loading="eager"
+      loading="lazy"
+      decoding="async"
     />
   );
 }

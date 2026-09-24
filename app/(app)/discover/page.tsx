@@ -26,6 +26,7 @@ import { RiskBadge, SourceBadge } from '@/components/shared/SourceBadge';
 import { AnimatedNumber } from '@/components/shared/AnimatedNumber';
 import { PageTipSection } from '@/components/shared/PageTipSection';
 import { TradingViewChart } from '@/components/market/TradingViewChart';
+import { LazyLoader } from '@/components/shared/LazyLoader';
 import { useDashboardLiveData } from '@/lib/hooks/useDashboardLiveData';
 import { useSolanaWallet } from '@/lib/services/solana-wallet';
 import { computeMitigatorRiskScore } from '@/lib/services/risk-engine';
@@ -284,11 +285,21 @@ export default function DashboardPage() {
 
           {/* Embedded Real Live TradingView & Solana DEX Chart */}
           <div className="pt-4">
-            <TradingViewChart
-              symbol={`${selectedChartSymbol}x`}
-              height={520}
-              showDexScreenerToggle={true}
-            />
+            <LazyLoader
+              rootMargin="100px"
+              fallback={
+                <div className="h-[520px] w-full rounded-2xl border border-border/80 bg-[#090d14] flex flex-col items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <div className="h-7 w-7 rounded-full border-2 border-primary/40 border-t-primary animate-spin" />
+                  <span className="font-mono text-[11px]">Loading real-time candlestick telemetry...</span>
+                </div>
+              }
+            >
+              <TradingViewChart
+                symbol={`${selectedChartSymbol}x`}
+                height={520}
+                showDexScreenerToggle={true}
+              />
+            </LazyLoader>
           </div>
         </GlassPanel>
       </motion.div>

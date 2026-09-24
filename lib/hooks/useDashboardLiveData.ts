@@ -53,7 +53,7 @@ export function useDashboardLiveData() {
   const [filings, setFilings] = useState<SECFiling[]>([]);
   const [isPythConnected, setIsPythConnected] = useState(false);
   const [lastHeartbeat, setLastHeartbeat] = useState<number>(Date.now());
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Poll CoinGecko and Pyth Hermes Prices
   const loadPythPrices = useCallback(async () => {
