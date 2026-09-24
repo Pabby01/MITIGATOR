@@ -59,7 +59,7 @@ export function PublicNav() {
         </div>
 
         {/* Right CTA Actions */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
           {/* Live Market Status Pill */}
           <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-mono text-emerald-400">
             <span className="relative flex h-2 w-2">
@@ -74,17 +74,17 @@ export function PublicNav() {
           {/* THE ONLY BUTTON THAT TAKES THEM TO THE DASHBOARD */}
           <Link
             href="/discover"
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/35 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+            className="flex items-center gap-1.5 sm:gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-semibold text-white shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/35 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
           >
             <span>Launch App</span>
-            <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
           </Link>
 
           {/* Mobile Menu Hamburger */}
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-xl border border-border/60 bg-card/50 text-muted-foreground hover:text-foreground hover:bg-card transition-colors"
+            className="lg:hidden p-1.5 sm:p-2 rounded-xl border border-border/60 bg-card/50 text-muted-foreground hover:text-foreground hover:bg-card transition-colors shrink-0"
             aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}

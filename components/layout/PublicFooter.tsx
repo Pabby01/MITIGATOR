@@ -141,7 +141,7 @@ export function PublicFooter() {
           <p className="text-center md:text-left">
             © 2026 MITIGATOR. Built for Stocklana Hackathon. Non-custodial protocol. Not financial advice.
           </p>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center md:justify-end gap-4 sm:gap-6">
             <Link href="/markets" className="hover:text-foreground transition-colors">
               Markets
             </Link>

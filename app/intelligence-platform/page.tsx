@@ -89,37 +89,37 @@ export default function PublicIntelligencePage() {
       <PublicNav />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-16 px-6 relative overflow-hidden">
+      <section className="pt-28 sm:pt-32 pb-12 sm:pb-16 px-4 sm:px-6 relative overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-500/10 via-background to-background" />
 
-        <div className="max-w-5xl mx-auto space-y-6 text-center">
+        <div className="max-w-5xl mx-auto space-y-5 sm:space-y-6 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-semibold text-cyan-400">
             <Brain className="h-3.5 w-3.5" />
             <span>AI-Driven Pre-Trade Intelligence · Zero Hallucinations</span>
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight max-w-4xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tight max-w-4xl mx-auto">
             Institutional Truth.{' '}
             <span className="bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent">
               Verified Before You Trade.
             </span>
           </h1>
 
-          <p className="text-muted-foreground text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
+          <p className="text-muted-foreground text-xs sm:text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
             MITIGATOR unites raw SEC EDGAR government filings, Pyth cryptographic oracles, and autonomous AI agents to give Solana tokenized equity traders verifiable market intelligence.
           </p>
         </div>
       </section>
 
       {/* SEC EDGAR Official Pipeline */}
-      <section className="py-12 px-6 max-w-6xl mx-auto space-y-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <section className="py-8 sm:py-12 px-4 sm:px-6 max-w-6xl mx-auto space-y-6 sm:space-y-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-4">
           <div>
             <div className="flex items-center gap-2 text-primary text-xs font-semibold uppercase tracking-wider">
               <FileText className="h-4 w-4" />
               <span>Direct Government Ingestion</span>
             </div>
-            <h2 className="text-2xl md:text-3xl font-black tracking-tight mt-1">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight mt-1">
               SEC EDGAR Filings Pipeline (Tier 1 Primary Data)
             </h2>
             <p className="text-xs text-muted-foreground mt-1 max-w-xl">
@@ -128,7 +128,7 @@ export default function PublicIntelligencePage() {
           </div>
           <Link
             href="/discover"
-            className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+            className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline self-start md:self-auto"
           >
             <span>Query Live Filings in Terminal</span>
             <ArrowRight className="h-3.5 w-3.5" />
@@ -136,9 +136,9 @@ export default function PublicIntelligencePage() {
         </div>
 
         {/* Filings Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {SAMPLE_FILINGS.map((filing) => (
-            <GlassPanel key={filing.ticker} className="p-5 space-y-3 border-border/70 hover:border-primary/40 transition-colors">
+            <GlassPanel key={filing.ticker} className="p-4 sm:p-5 space-y-3 border-border/70 hover:border-primary/40 transition-colors">
               <div className="flex items-center justify-between">
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-primary/15 text-primary border border-primary/25">
                   {filing.form}
@@ -168,10 +168,10 @@ export default function PublicIntelligencePage() {
       </section>
 
       {/* Autonomous AI Agent Swarm Section */}
-      <section className="py-16 px-6 bg-card/25 border-y border-border/40">
-        <div className="max-w-6xl mx-auto space-y-8">
-          <div className="text-center space-y-3">
-            <h2 className="text-2xl md:text-3xl font-black tracking-tight">
+      <section className="py-12 sm:py-16 px-4 sm:px-6 bg-card/25 border-y border-border/40">
+        <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
+          <div className="text-center space-y-2.5 sm:space-y-3">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight">
               Autonomous AI Agent Swarm Architecture
             </h2>
             <p className="text-xs md:text-sm text-muted-foreground max-w-xl mx-auto">
@@ -181,10 +181,10 @@ export default function PublicIntelligencePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {AGENT_SWARM.map((agent) => (
-              <GlassPanel key={agent.name} className="p-5 space-y-3 hover:border-cyan-500/30 transition-all">
-                <div className="flex items-center justify-between">
+              <GlassPanel key={agent.name} className="p-4 sm:p-5 space-y-3 hover:border-cyan-500/30 transition-all">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <div className="h-7 w-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                    <div className="h-7 w-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
                       <Sparkles className="h-3.5 w-3.5" />
                     </div>
                     <div>
@@ -192,7 +192,7 @@ export default function PublicIntelligencePage() {
                       <p className="text-[10px] text-muted-foreground font-mono">{agent.role}</p>
                     </div>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-secondary border border-border text-foreground font-medium">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-secondary border border-border text-foreground font-medium shrink-0">
                     {agent.badge}
                   </span>
                 </div>
@@ -206,18 +206,18 @@ export default function PublicIntelligencePage() {
       </section>
 
       {/* Bottom CTA */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-card/70 to-emerald-500/5 p-8 md:p-12 text-center space-y-6 shadow-2xl">
-          <h2 className="text-2xl md:text-4xl font-black text-foreground">
+      <section className="py-14 sm:py-20 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto rounded-3xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-card/70 to-emerald-500/5 p-6 sm:p-8 md:p-12 text-center space-y-5 sm:space-y-6 shadow-2xl">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-foreground">
             Experience Live AI Due Diligence &amp; Alert Feeds
           </h2>
-          <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-xl mx-auto">
             Test the live intelligence scanner in our web terminal with zero setup.
           </p>
-          <div className="flex justify-center pt-2">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 pt-2">
             <Link
               href="/discover"
-              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-cyan-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-cyan-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
             >
               <span>Launch App</span>
               <ArrowRight className="h-4 w-4" />

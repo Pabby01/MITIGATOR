@@ -90,15 +90,30 @@ export function ScoreRing({
           style={{ filter: `drop-shadow(0 0 8px ${color}50)` }}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
         <span
-          className="text-4xl font-extrabold tabular-nums transition-all"
-          style={{ color }}
+          className="font-black tabular-nums transition-all leading-none text-center"
+          style={{
+            color,
+            fontSize:
+              size < 48
+                ? '13px'
+                : size < 64
+                ? '16px'
+                : size < 90
+                ? '20px'
+                : size < 140
+                ? '28px'
+                : '38px',
+          }}
         >
           {displayScore}
         </span>
-        {showLabel && (
-          <span className="text-[9px] font-medium tracking-widest text-muted-foreground mt-0.5">
+        {showLabel && size >= 85 && (
+          <span
+            className="font-semibold tracking-wider text-muted-foreground text-center uppercase leading-tight"
+            style={{ fontSize: size >= 140 ? '9px' : '8px', marginTop: size >= 140 ? '4px' : '2px' }}
+          >
             {label}
           </span>
         )}
