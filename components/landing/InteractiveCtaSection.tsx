@@ -122,17 +122,16 @@ export function InteractiveCtaSection() {
         <div className="pt-4 flex flex-col sm:flex-row gap-3.5 justify-center">
           <Link
             href="/discover"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-xl shadow-primary/25"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-3.5 text-sm font-bold text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-emerald-500/25 cursor-pointer"
           >
-            Explore Markets
+            <span>Launch App</span>
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
-            href="/intelligence"
+            href="/markets"
             className="inline-flex items-center justify-center gap-2 rounded-xl hairline-card px-8 py-3.5 text-sm font-semibold text-foreground hover:border-primary/40 transition-all hover:scale-[1.02]"
           >
-            <Brain className="h-4 w-4 text-primary" />
-            Ask AI Copilot
+            <span>Explore Tokenized Markets</span>
           </Link>
         </div>
       </div>

@@ -31,6 +31,8 @@ import { SourceBadge, RiskBadge } from '@/components/shared/SourceBadge';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { BrandLogo } from '@/components/shared/BrandLogo';
 import { AnimatedFactorBar } from '@/components/landing/AnimatedFactorBar';
+import { PublicNav } from '@/components/layout/PublicNav';
+import { PublicFooter } from '@/components/layout/PublicFooter';
 import { getAllAssets } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 
@@ -118,38 +120,7 @@ export default function LandingPage() {
       <GsapScrollEffects />
 
       {/* ─── TOP NAVIGATION ─── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 backdrop-blur-xl bg-background/70 border-b border-border/40">
-        <Link href="/" className="flex items-center gap-3">
-          <BrandLogo size={30} glow withText textSize="text-lg" />
-        </Link>
-
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
-          <Link href="/discover" className="hover:text-foreground transition-colors">Markets</Link>
-          <Link href="/intelligence" className="hover:text-foreground transition-colors">Intelligence</Link>
-          <Link href="/risk" className="hover:text-foreground transition-colors">Risk Engine</Link>
-          <Link href="/execution" className="hover:text-foreground transition-colors">Execution</Link>
-          <Link href="/portfolio" className="hover:text-foreground transition-colors">Portfolio</Link>
-          <Link href="/provenance" className="hover:text-foreground transition-colors">Provenance</Link>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <Link
-            href="/discover"
-            className="hidden sm:inline-flex items-center gap-2 rounded-xl border border-border/70 bg-card/50 px-4 py-2 text-sm font-medium hover:border-primary/40 hover:bg-card transition-all"
-          >
-            <Wallet className="h-4 w-4 text-primary" />
-            Connect
-          </Link>
-          <Link
-            href="/discover"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4.5 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-lg shadow-primary/20"
-          >
-            Launch App
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </nav>
+      <PublicNav />
 
       {/* ─── 3D HERO SECTION ─── */}
       <section className="relative min-h-[95vh] flex flex-col justify-center overflow-hidden pt-24 pb-16">
@@ -210,18 +181,18 @@ export default function LandingPage() {
               className="mt-8 flex flex-col sm:flex-row gap-3.5"
             >
               <Link
-                href="/discover"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-xl shadow-primary/25"
+                href="/markets"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all hover:scale-[1.02] shadow-xl shadow-primary/25 cursor-pointer"
               >
-                Explore Markets
+                <span>Explore Markets</span>
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/risk"
-                className="inline-flex items-center justify-center gap-2 rounded-xl hairline-card px-7 py-3.5 text-sm font-semibold text-foreground hover:border-primary/40 transition-all"
+                href="/risk-engine"
+                className="inline-flex items-center justify-center gap-2 rounded-xl hairline-card px-7 py-3.5 text-sm font-semibold text-foreground hover:border-primary/40 transition-all cursor-pointer"
               >
                 <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                Simulate Risk
+                <span>Simulate Risk</span>
               </Link>
             </motion.div>
           </div>
@@ -674,23 +645,7 @@ export default function LandingPage() {
       <InteractiveCtaSection />
 
       {/* ─── FOOTER ─── */}
-      <footer className="border-t border-border/40 py-10 px-6 bg-card/20">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <BrandLogo size={24} glow />
-            <span className="text-sm font-bold tracking-tight">MITIGATOR</span>
-            <span className="text-xs text-muted-foreground">· Built for Stocklana 2026</span>
-          </div>
-          <p className="text-xs text-muted-foreground text-center">
-            Decentralized intelligence &amp; risk platform. Non-custodial. Not financial advice.
-          </p>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <Link href="/provenance" className="hover:text-foreground transition-colors">Provenance</Link>
-            <Link href="/risk" className="hover:text-foreground transition-colors">Risk Methodology</Link>
-            <Link href="/settings" className="hover:text-foreground transition-colors">Settings</Link>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
