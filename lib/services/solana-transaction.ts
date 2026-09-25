@@ -16,6 +16,29 @@ import {
 export const SOLANA_DEVNET_RPC =
   process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.devnet.solana.com';
 
+/**
+ * Returns the primary RPC URL for the requested network cluster.
+ * In browser environments, routes through the MITIGATOR same-origin RPC proxy
+ * to prevent 403 Access Forbidden and CORS errors from public Solana RPC nodes.
+ */
+export function getSolanaRpcUrl(network: 'devnet' | 'mainnet-beta' = 'devnet'): string {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/api/rpc?network=${network}`;
+  }
+  return network === 'devnet'
+    ? process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.devnet.solana.com'
+    : 'https://solana-rpc.publicnode.com';
+}
+
+/**
+ * Direct public node fallback if internal gateway is unreachable
+ */
+export function getFallbackRpcUrl(network: 'devnet' | 'mainnet-beta' = 'devnet'): string {
+  return network === 'devnet'
+    ? 'https://solana-devnet-rpc.publicnode.com'
+    : 'https://solana-rpc.publicnode.com';
+}
+
 export const MEMO_PROGRAM_ID = new PublicKey(
   'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr'
 );
@@ -101,16 +124,28 @@ export async function executeRealSolanaTrade(
   }
 
   const userPublicKey = new PublicKey(userAddress);
-  const rpcUrl =
-    network === 'devnet'
-      ? SOLANA_DEVNET_RPC
-      : 'https://api.mainnet-beta.solana.com';
+  const primaryRpcUrl = getSolanaRpcUrl(network);
+  const fallbackRpcUrl = getFallbackRpcUrl(network);
 
-  const connection = new Connection(rpcUrl, 'confirmed');
+  let connection = new Connection(primaryRpcUrl, 'confirmed');
 
-  // 1. Fetch latest blockhash from Solana network
-  const { blockhash, lastValidBlockHeight } =
-    await connection.getLatestBlockhash('confirmed');
+  // 1. Fetch latest blockhash with multi-node failover
+  let blockhash: string;
+  let lastValidBlockHeight: number;
+
+  try {
+    const latest = await connection.getLatestBlockhash('confirmed');
+    blockhash = latest.blockhash;
+    lastValidBlockHeight = latest.lastValidBlockHeight;
+  } catch (primaryErr: any) {
+    console.warn(
+      `[executeRealSolanaTrade] Primary RPC (${primaryRpcUrl}) blockhash error: ${primaryErr?.message}. Retrying via fallback node (${fallbackRpcUrl})...`
+    );
+    connection = new Connection(fallbackRpcUrl, 'confirmed');
+    const fallbackLatest = await connection.getLatestBlockhash('confirmed');
+    blockhash = fallbackLatest.blockhash;
+    lastValidBlockHeight = fallbackLatest.lastValidBlockHeight;
+  }
 
   const transaction = new Transaction();
   transaction.recentBlockhash = blockhash;
@@ -136,11 +171,13 @@ export async function executeRealSolanaTrade(
   });
   transaction.add(memoInstruction);
 
-  // 3. Add Micro Settlement / Escrow Deposit (0.001 Devnet SOL)
-  const settlementFeeLamports = Math.min(
-    1_000_000,
-    Math.round(0.001 * LAMPORTS_PER_SOL)
-  );
+  // 3. Add Micro Settlement / Escrow Deposit
+  // Devnet: 0.001 Devnet SOL (1,000,000 lamports)
+  // Mainnet: 0.000005 SOL (5,000 lamports / ~$0.0009) to avoid simulation balance failures on real SOL wallets
+  const settlementFeeLamports =
+    network === 'mainnet-beta'
+      ? 5_000
+      : Math.min(1_000_000, Math.round(0.001 * LAMPORTS_PER_SOL));
 
   const transferInstruction = SystemProgram.transfer({
     fromPubkey: userPublicKey,
@@ -173,7 +210,7 @@ export async function executeRealSolanaTrade(
     throw new Error('Failed to retrieve valid transaction signature from wallet.');
   }
 
-  // 5. Await on-chain confirmation on Solana Devnet
+  // 5. Await on-chain confirmation on Solana network
   try {
     const confirmation = await connection.confirmTransaction(
       {
@@ -192,8 +229,13 @@ export async function executeRealSolanaTrade(
     // Continue if already broadcast
   }
 
-  const explorerUrl = `https://explorer.solana.com/tx/${signature}?cluster=${network}`;
-  const solscanUrl = `https://solscan.io/tx/${signature}?cluster=${network}`;
+  const isMainnet = network === 'mainnet-beta';
+  const explorerUrl = isMainnet
+    ? `https://explorer.solana.com/tx/${signature}`
+    : `https://explorer.solana.com/tx/${signature}?cluster=devnet`;
+  const solscanUrl = isMainnet
+    ? `https://solscan.io/tx/${signature}`
+    : `https://solscan.io/tx/${signature}?cluster=devnet`;
 
   return {
     signature,
@@ -218,7 +260,10 @@ export async function executeRealSolanaTrade(
 export async function requestDevnetAirdrop(
   publicKey: string
 ): Promise<{ signature: string; explorerUrl: string; message?: string }> {
-  const connection = new Connection(SOLANA_DEVNET_RPC, {
+  const primaryRpcUrl = getSolanaRpcUrl('devnet');
+  const fallbackRpcUrl = getFallbackRpcUrl('devnet');
+
+  let connection = new Connection(primaryRpcUrl, {
     commitment: 'confirmed',
     disableRetryOnRateLimit: true,
   });
@@ -226,7 +271,10 @@ export async function requestDevnetAirdrop(
 
   try {
     // 1. Check existing wallet balance first
-    const currentLamports = await connection.getBalance(pubkey, 'confirmed').catch(() => 0);
+    const currentLamports = await connection.getBalance(pubkey, 'confirmed').catch(async () => {
+      const fallbackConn = new Connection(fallbackRpcUrl, 'confirmed');
+      return await fallbackConn.getBalance(pubkey, 'confirmed').catch(() => 0);
+    });
     const balanceSol = currentLamports / LAMPORTS_PER_SOL;
 
     // If user already holds ample SOL (>0.05 SOL = >10,000 transactions), inform them gracefully

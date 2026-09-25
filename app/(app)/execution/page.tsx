@@ -755,7 +755,11 @@ function ExecutionRouterContent() {
                     ) : (
                       <>
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        <span>{executionMode === 'onchain' ? 'Sign & Swap on Devnet' : 'Approve & Broadcast'}</span>
+                        <span>
+                          {executionMode === 'onchain'
+                            ? (network === 'devnet' ? 'Sign & Swap on Devnet' : 'Sign & Swap on Mainnet')
+                            : 'Approve & Broadcast'}
+                        </span>
                       </>
                     )}
                   </button>

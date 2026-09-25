@@ -9,12 +9,14 @@ export const SOLANA_CONFIG = {
   devnet: {
     name: 'Solana Devnet',
     rpcUrl: process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.devnet.solana.com',
+    fallbackRpcUrl: 'https://solana-devnet-rpc.publicnode.com',
     usdcMint: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
     explorer: (sig: string) => `https://solscan.io/tx/${sig}?cluster=devnet`,
   },
   'mainnet-beta': {
     name: 'Solana Mainnet',
-    rpcUrl: process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
+    rpcUrl: process.env.NEXT_PUBLIC_SOLANA_MAINNET_RPC || 'https://solana-rpc.publicnode.com',
+    fallbackRpcUrl: 'https://api.mainnet-beta.solana.com',
     usdcMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
     explorer: (sig: string) => `https://solscan.io/tx/${sig}`,
   },
@@ -65,13 +67,15 @@ export function formatShortAddress(addr: string | null): string {
 }
 
 /**
- * Direct Solana JSON-RPC balance query
+ * Direct Solana JSON-RPC balance query with multi-node proxy failover
  */
 export async function fetchLiveSolBalance(pubkey: string, network: SolanaNetwork = 'devnet'): Promise<number> {
-  const primaryRpc = network === 'devnet' ? 'https://api.devnet.solana.com' : 'https://api.mainnet-beta.solana.com';
-  const customRpc = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
-  const rpcEndpoints = [customRpc, primaryRpc].filter(Boolean) as string[];
+  const proxyRpc = typeof window !== 'undefined' ? `${window.location.origin}/api/rpc?network=${network}` : null;
+  const directPublicRpc = network === 'devnet' ? 'https://api.devnet.solana.com' : 'https://solana-rpc.publicnode.com';
+  const customRpc = network === 'devnet' ? process.env.NEXT_PUBLIC_SOLANA_RPC_URL : process.env.NEXT_PUBLIC_SOLANA_MAINNET_RPC;
+  const secondaryPublicRpc = network === 'devnet' ? 'https://solana-devnet-rpc.publicnode.com' : 'https://api.mainnet-beta.solana.com';
 
+  const rpcEndpoints = [proxyRpc, customRpc, directPublicRpc, secondaryPublicRpc].filter(Boolean) as string[];
   const uniqueEndpoints = Array.from(new Set(rpcEndpoints));
 
   for (const rpcUrl of uniqueEndpoints) {
@@ -100,13 +104,15 @@ export async function fetchLiveSolBalance(pubkey: string, network: SolanaNetwork
 }
 
 /**
- * Direct Solana JSON-RPC query for SPL USDC balance
+ * Direct Solana JSON-RPC query for SPL USDC balance with multi-node proxy failover
  */
 export async function fetchLiveUsdcBalance(pubkey: string, network: SolanaNetwork = 'devnet'): Promise<number> {
   const config = SOLANA_CONFIG[network] || SOLANA_CONFIG['devnet'];
-  const customRpc = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
-  const rpcEndpoints = [customRpc, config.rpcUrl].filter(Boolean) as string[];
+  const proxyRpc = typeof window !== 'undefined' ? `${window.location.origin}/api/rpc?network=${network}` : null;
+  const directPublicRpc = network === 'devnet' ? 'https://api.devnet.solana.com' : 'https://solana-rpc.publicnode.com';
+  const customRpc = network === 'devnet' ? process.env.NEXT_PUBLIC_SOLANA_RPC_URL : process.env.NEXT_PUBLIC_SOLANA_MAINNET_RPC;
 
+  const rpcEndpoints = [proxyRpc, customRpc, config.rpcUrl, directPublicRpc, config.fallbackRpcUrl].filter(Boolean) as string[];
   const uniqueEndpoints = Array.from(new Set(rpcEndpoints));
   const USDC_MINT = config.usdcMint;
 
